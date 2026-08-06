@@ -1,0 +1,30 @@
+[Unit]
+Description=FRAME Organ — Federation Reference & Assessment Measurement Engine
+After=network.target
+Wants=arifos.service aforge.service signal-organ.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/frame/app
+EnvironmentFile=/root/.secrets/kunci-mas.flat.env
+ExecStart=/opt/frame/venv/bin/python -m uvicorn frame_organ.main:app \
+    --host 127.0.0.1 \
+    --port 18085 \
+    --log-level info
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=frame-organ
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/frame/app /var/lib/frame
+ReadOnlyPaths=/root/.secrets/kunci-mas.flat.env
+
+[Install]
+WantedBy=multi-user.target
