@@ -12,7 +12,7 @@ truth_rule: live systemctl status frame-organ.service + /health endpoint beat an
 # 🧱 FRAME — Frame Organ Substrate
 
 [![Federation](https://img.shields.io/badge/Federation-v2026.08.04-0a7b83)](https://arifos.arif-fazil.com)
-[![🧱 FRAME](https://img.shields.io/badge/%F0%9F%A7%B1%20FRAME-Substrate-6b7280)](https://github.com/ariffazil/FRAME)
+[![🧱 FRAME](https://img.shields.io/badge/%F0%9F%A7%B1%20FRAME-Substrate-6b7280)](https://arif-fazil.com)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](./LICENSE)
 
 > **FRAME is the substrate. It scaffolds. It never decides.**
@@ -107,3 +107,69 @@ Reference: PR #1 (FRAME pattern replication).
 
 > *DITEMPA BUKAN DIBERI — Forged, Not Given.*  
 > *Truth must cool before it rules. 999 SEAL ALIVE.*
+
+---
+
+## 🗺️ Where FRAME Sits in the Federation
+
+```mermaid
+flowchart LR
+  subgraph Meta["🧱 Substrate audit"]
+    FRAME[("🧱 FRAME<br/>substrate scaffolding<br/>reality-drift detection")]
+  end
+
+  subgraph Truth["💀 Truth"]
+    VAULT["VAULT999<br/>(seal head)"]
+  end
+
+  subgraph Reality["Reality check"]
+    ARIFOS["arifOS :8088<br/>runtime probe"]
+    AFORGE["A-FORGE :7071/72<br/>runtime probe"]
+    ORGANS["All 10 organs"]
+  end
+
+  FRAME -->|"seal head read"| VAULT
+  FRAME -->|"runtime probe"| ARIFOS
+  FRAME -->|"runtime probe"| AFORGE
+  FRAME -->|"reality-drift signal"| ORGANS
+
+  VAULT -->|"head_hash · canonical_entries"| FRAME
+  ARIFOS -->|"floor verdict · tools_loaded"| FRAME
+  AFORGE -->|"build_commit · runtime drift"| FRAME
+
+  classDef meta fill:#9C27B0,stroke:#000,color:#fff,stroke-width:2px
+  classDef truth fill:#000,stroke:#000,color:#fff
+  class FRAME meta
+```
+
+**FRAME internal loop:**
+
+```
+seal-chain head read (from VAULT999 :999/verify)
+        │
+        ▼
+cross-verify (independent endpoint — AAA :3001 seal-chain)
+        │
+        ▼
+runtime probe (each organ /health)
+        │
+        ▼
+drift matrix (gap_count · staleness · floor_count · tools_count)
+        │
+        ▼
+emit drift signal → AAA + arifOS + arifFlow + FED
+```
+
+**Hard rules (OBSERVE ceiling):**
+- FRAME never adjudicates. Drift signal is observation, not verdict.
+- FRAME never executes. Pure probe + report.
+- FRAME never rewrites VAULT999. It only reads head_hash.
+
+---
+
+## 🏅 Federation Certification
+
+[![Federation](https://img.shields.io/endpoint?url=https%3A%2F%2Farif-fazil.com%2F.well-known%2Fbadge%2Ffederation.json&style=flat-square&label=federation)](https://arifos.arif-fazil.com/health)
+[![FRAME: OBSERVE](https://img.shields.io/badge/FRAME-OBSERVE_ONLY-9C27B0?style=flat-square)] (private repo — see arifOS FEDERATION.md)
+
+---
