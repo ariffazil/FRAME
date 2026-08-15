@@ -140,6 +140,33 @@ async def frame_probe_organ(organ: str):
     return result.model_dump()
 
 
+
+# ── OBSERVER DOCTRINE HARDENING (2026-08-15, external audit) ────────
+# Every observational payload carries authority + verdict_source so no
+# consumer can mistake severity for a verdict (Gödel leak guard), and
+# baselines older than 90d emit BASELINE_STALE as a meta-signal —
+# refresh remains sovereign-gated, never automatic (anti-Goodhart).
+import datetime as _dt
+
+BASELINE_STALE_AFTER_DAYS = 90
+
+
+def _observe(payload: dict) -> dict:
+    payload["authority"] = "OBSERVATIONAL_ONLY"
+    payload["verdict_source"] = None
+    try:
+        from .baseline import load_baseline
+        est = (load_baseline() or {}).get("established_at", "")
+        if est:
+            age_days = (_dt.datetime.now(_dt.timezone.utc)
+                        - _dt.datetime.strptime(est, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=_dt.timezone.utc)).days
+            payload["baseline_age_days"] = age_days
+            payload["baseline_stale"] = age_days > BASELINE_STALE_AFTER_DAYS
+    except Exception:
+        pass
+    return payload
+
+
 # ── Chamber 3: Compare ─────────────────────────────────────────────
 
 
@@ -148,7 +175,7 @@ async def frame_drift():
     """Run a full federation probe and compare against baselines."""
     probe = await probe_federation()
     drift = compare_federation(probe)
-    return drift.model_dump()
+    return _observe(drift.model_dump())
 
 
 # ── Chamber 4: Trend ───────────────────────────────────────────────
@@ -184,10 +211,10 @@ async def frame_alert():
     probe = await probe_federation()
     drift = compare_federation(probe)
     alert_result = await escalate_drift(drift)
-    return {
+    return _observe({
         "drift": drift.model_dump(),
         "alert": alert_result,
-    }
+    })
 
 
 # ── Chamber 6: Report ──────────────────────────────────────────────
@@ -204,7 +231,7 @@ async def frame_report(period: str = "daily"):
     trend = get_federation_trend(hours=24 if period == "daily" else 168)
 
     report = generate_report(probe=probe, drift=drift, trend=trend, period=period)
-    return report.model_dump()
+    return _observe(report.model_dump())
 
 
 @app.get("/frame/report")

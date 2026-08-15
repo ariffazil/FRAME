@@ -14,6 +14,26 @@ async def escalate_drift(report: DriftReport) -> dict:
     if report.overall_verdict == "STABLE":
         return {"sent": False, "reason": "stable_no_alert"}
 
+    # SUPPRESS chamber (2026-08-15, observer-fatigue hardening):
+    # identical drift signature collapses to one alert per 24h window.
+    import json as _json
+    import os as _os
+    import time as _time
+    state_path = "/var/lib/frame/alert_state.json"  # ReadWritePaths-sanctioned (ProtectHome blocks /root)
+    key = "|".join(sorted(f"{s.organ}/{s.metric}" for s in report.signals))
+    now = _time.time()
+    try:
+        state = _json.load(open(state_path)) if _os.path.exists(state_path) else {}
+    except Exception:
+        state = {}
+    if state.get("key") == key and now - state.get("ts", 0) < 86400:
+        return {"sent": False, "reason": "suppressed_duplicate_24h", "severity": "CRITICAL" if report.overall_verdict == "CRITICAL" else "HIGH"}
+    try:
+        _os.makedirs(_os.path.dirname(state_path), exist_ok=True)
+        _json.dump({"key": key, "ts": now}, open(state_path, "w"))
+    except Exception:
+        pass
+
     severity = "MEDIUM"
     is_breach = False
     requires_sovereign = False
