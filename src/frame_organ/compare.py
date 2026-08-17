@@ -82,27 +82,51 @@ def compare_federation(probe: FederationProbe) -> DriftReport:
     bl = get_baseline()
     bl_fq = bl.get("federation", {}).get("avg_fq", 1.0)
     if probe.fq and isinstance(probe.fq, dict):
-        current_fq = probe.fq.get("quotient", 1.0)
-        if current_fq < bl_fq * 0.5:
+        current_fq = probe.fq.get("quotient")
+        if current_fq is None:
+            all_signals.append(
+                DriftSignal(
+                    organ="arifflow",
+                    metric="fq",
+                    baseline_value=str(bl_fq),
+                    current_value="null",
+                    drift_delta="FQ_NULLIFIED",
+                    severity="HIGH",
+                    trend="DECAYING",
+                )
+            )
+        elif not isinstance(current_fq, (int, float)):
             all_signals.append(
                 DriftSignal(
                     organ="arifflow",
                     metric="fq",
                     baseline_value=str(bl_fq),
                     current_value=str(current_fq),
-                    drift_delta=f"{current_fq - bl_fq:+.3f}",
+                    drift_delta="FQ_UNMEASURED",
+                    severity="MEDIUM",
+                    trend="STABLE",
+                )
+            )
+        elif current_fq < (bl_fq or 1.0) * 0.5:
+            all_signals.append(
+                DriftSignal(
+                    organ="arifflow",
+                    metric="fq",
+                    baseline_value=str(bl_fq),
+                    current_value=str(current_fq),
+                    drift_delta=f"{current_fq - (bl_fq or 0):+.3f}",
                     severity="CRITICAL",
                     trend="DECAYING",
                 )
             )
-        elif current_fq < bl_fq * 0.8:
+        elif current_fq < (bl_fq or 1.0) * 0.8:
             all_signals.append(
                 DriftSignal(
                     organ="arifflow",
                     metric="fq",
                     baseline_value=str(bl_fq),
                     current_value=str(current_fq),
-                    drift_delta=f"{current_fq - bl_fq:+.3f}",
+                    drift_delta=f"{current_fq - (bl_fq or 0):+.3f}",
                     severity="MEDIUM",
                     trend="DECAYING",
                 )
