@@ -1,7 +1,7 @@
 <!-- SOT-MANIFEST
-federation_release: v2026.08.09
-last_verified: 2026-08-10T12:08:00Z
-live_commit: 3af3015 (init FRAME as independent repo — zen-2026-08-06)
+federation_release: v2026.08.25
+last_verified: 2026-08-25T12:14:00Z
+live_commit: ee6771ad6326af3802a0e20da3dd19db7e04441c (fix(license): add AGPL-3.0 LICENSE — matches badge + doctrine)
 organ: FRAME
 role: substrate-organ (frame-organ.service — capability substrate)
 authority: OBSERVE_ONLY — provides substrate primitives, never adjudicates
