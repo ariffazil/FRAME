@@ -9,7 +9,26 @@ license: AGPL-3.0
 truth_rule: live systemctl status frame-organ.service + /health endpoint beat any static count in prose
 -->
 
-# 🧱 FRAME — Frame Organ Substrate
+> # ⚠️ ARCHIVED — DO NOT USE THIS REPOSITORY
+> 
+> **FRAME has been consolidated into the AAA federation state plane as of 2026-08-26.**
+> 
+> | Field | New location |
+> |-------|-------------|
+> | **Canonical source** | `ariffazil/AAA` repo → `federation/frame/` |
+> | **Doctrine** | [`AAA_FEDERATION_FRAME_BOUNDARY_ALIGNMENT.md`](https://github.com/ariffazil/AAA/blob/main/federation/AAA_FEDERATION_FRAME_BOUNDARY_ALIGNMENT.md) |
+> | **Substrate runtime** | `/root/AAA/federation/frame/` (was `/root/FRAME/`) |
+> | **Identity preserved** | systemd unit `frame-organ.service`, port `:18085`, AGPL-3.0 license, all 6 chambers |
+> 
+> **This repository is preserved READ-ONLY for historical and audit purposes.**
+> The substrate organ continues to serve at `:18085` via the AAA state plane.
+> 
+> For doctrine: substrate belongs in state plane, not as peer sovereign surface.
+> For migration history: see commit log (4 sprints, 2026-08-26).
+> 
+> ---
+> 
+> # 🧱 FRAME — Frame Organ Substrate
 
 [![Federation](https://img.shields.io/badge/Federation-v2026.08.04-0a7b83)](https://arifos.arif-fazil.com)
 [![🧱 FRAME](https://img.shields.io/badge/%F0%9F%A7%B1%20FRAME-Substrate-6b7280)](https://arif-fazil.com)
