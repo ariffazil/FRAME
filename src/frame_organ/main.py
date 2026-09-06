@@ -240,6 +240,29 @@ async def frame_report_default():
     return await frame_report("daily")
 
 
+
+# ── Chamber 8: Pre-Flight Web Gate (Fix 2) ────────────────────────
+from .web_gate import check_preflight_web_gate, enforce_web_gate_or_abort
+
+
+@app.get("/frame/gate/web-preflight")
+async def frame_gate_web_preflight():
+    """Verify /llms.txt, rsl.xml, and vault999_hash in index.html before deployment."""
+    res = check_preflight_web_gate()
+    if res["status"] != "PASS":
+        return JSONResponse(status_code=400, content=_observe(res))
+    return _observe(res)
+
+
+@app.post("/frame/gate/web-preflight")
+async def frame_gate_web_preflight_post():
+    """Enforce pre-flight web gate, aborting if violations detected."""
+    res = check_preflight_web_gate()
+    if res["status"] != "PASS":
+        return JSONResponse(status_code=400, content=_observe(res))
+    return _observe(res)
+
+
 # ── Entrypoint ──────────────────────────────────────────────────────
 
 if __name__ == "__main__":
