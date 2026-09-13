@@ -1,7 +1,9 @@
 <!-- SOT-MANIFEST
-federation_release: v2026.08.25
-last_verified: 2026-08-25T12:14:00Z
-live_commit: ee6771ad6326af3802a0e20da3dd19db7e04441c (fix(license): add AGPL-3.0 LICENSE — matches badge + doctrine)
+federation_release: v2026.09.13
+last_verified: 2026-09-13T06:32:00Z
+live_commit: f9ade12
+live_health: ok :18085 observer (chambers active) — FRAME evaluates contrast, never mutates A2A terminal states
+apex_zen: A2A delegates ⊥ MCP equips ⊥ ACT mutates ⊥ arifOS governs ⊥ F13 decides
 organ: FRAME
 role: substrate-organ (frame-organ.service — capability substrate)
 authority: OBSERVE_ONLY — provides substrate primitives, never adjudicates
