@@ -113,4 +113,4 @@ def frame_rsi_verify() -> dict[str, Any]:
 
 
 if __name__ == "__main__":
-    mcp.run(transport="http", host="127.0.0.1", port=18086)
+    mcp.run(transport="http", host="127.0.0.1", port=18086, json_response=True)
