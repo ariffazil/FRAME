@@ -13,6 +13,7 @@ Six chambers:
 
 import time
 from contextlib import asynccontextmanager
+from typing import Optional
 
 from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse
@@ -30,6 +31,7 @@ from .trend import append_trend, get_federation_trend, TrendPoint
 from .rsi_verify import verify_monotonicity
 from .alert import escalate_drift
 from .report import generate_report
+from .rejection import load_rejections, get_rejection_summary
 from .config import FRAME_PORT, FRAME_HOST, FRAME_LOG_LEVEL
 
 
@@ -70,6 +72,7 @@ async def health():
             "alert": "active",
             "report": "active",
             "rsi_verify": "active",
+            "rejection": "active",
         },
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
@@ -261,6 +264,43 @@ async def frame_gate_web_preflight_post():
     if res["status"] != "PASS":
         return JSONResponse(status_code=400, content=_observe(res))
     return _observe(res)
+
+
+# ── Chamber 9: Rejection Telemetry ────────────────────────────────
+
+
+@app.get("/frame/rejections")
+async def frame_rejections(
+    hours: int = Query(default=24, ge=1, le=8760),
+    organ: Optional[str] = Query(default=None),
+    source: Optional[str] = Query(default=None),
+    severity: Optional[str] = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=1000),
+):
+    """Unified rejection telemetry across all organs.
+
+    Returns aggregated counts by organ/type/severity plus recent events.
+    Optional filters: organ, source, severity, limit.
+    """
+    summary = get_rejection_summary(hours=hours)
+    events = load_rejections(
+        limit=limit, organ=organ, source=source, severity=severity,
+        since=(
+            _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(hours=hours)
+        ).isoformat(),
+    )
+    return _observe({
+        "summary": summary.model_dump(),
+        "filtered_events": events,
+        "filters": {"hours": hours, "organ": organ, "source": source, "severity": severity},
+    })
+
+
+@app.get("/frame/rejections/summary")
+async def frame_rejection_summary(hours: int = Query(default=24, ge=1, le=8760)):
+    """Compact rejection summary — counts only, no event detail."""
+    summary = get_rejection_summary(hours=hours)
+    return _observe(summary.model_dump(exclude={"recent_events"}))
 
 
 # ── Entrypoint ──────────────────────────────────────────────────────
