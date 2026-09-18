@@ -31,6 +31,10 @@ FRAME_PORT = 18085
 mcp = FastMCP(
     name="frame-mcp",
     version="2026.09.14",
+    # MCP spec 2026-07-28 compliance: declare listChanged capabilities
+    experimental_capabilities={
+        "resources": {"listChanged": True},
+    },
     instructions=(
         "FRAME — Observer organ for arifOS Federation. "
         "Authority: OBSERVE_ONLY. Drift detection, evidence gathering. "
