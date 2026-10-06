@@ -31,10 +31,6 @@ FRAME_PORT = 18085
 mcp = FastMCP(
     name="frame-mcp",
     version="2026.09.14",
-    # MCP spec 2026-07-28 compliance: declare listChanged capabilities
-    experimental_capabilities={
-        "resources": {"listChanged": True},
-    },
     instructions=(
         "FRAME — Observer organ for arifOS Federation. "
         "Authority: OBSERVE_ONLY. Drift detection, evidence gathering. "
@@ -114,6 +110,63 @@ def frame_rsi_verify() -> dict[str, Any]:
     F11 AUDITABILITY guard — detects silent rollback, truncation, or replay.
     Read-only, pure verification."""
     return _frame_get("/frame/rsi-verify")
+
+
+@mcp.tool()
+def frame_behavioral_drift(
+    tool_calls: list[str] | None = None,
+    agent_responses: list[str] | None = None,
+    response_lengths: list[int] | None = None,
+    receipt_bytes: int = 0,
+    output_bytes: int = 0,
+    shadow_triggers: int = 0,
+    total_interactions: int = 0,
+) -> dict[str, Any]:
+    """Compute behavioral drift metrics for an agent session.
+    Returns 5 metrics: tool_call_entropy, question_back_rate,
+    verbosity_drift, receipt_output_ratio, shadow_activation_rate.
+    OBSERVATIONAL_ONLY — evidence, never a verdict.
+
+    Args:
+        tool_calls: List of tool names called in session
+        agent_responses: List of agent response texts
+        response_lengths: List of response lengths over time
+        receipt_bytes: Total receipt metadata bytes
+        output_bytes: Total useful output bytes
+        shadow_triggers: Number of shadow checks triggered
+        total_interactions: Total interactions in session
+    """
+    import sys
+    sys.path.insert(0, "/root/arifOS/arifosmcp/tools")
+    from frame_behavioral_drift import compute_all, report
+
+    metrics = compute_all(
+        tool_calls=tool_calls,
+        agent_responses=agent_responses,
+        response_lengths=response_lengths,
+        receipt_bytes=receipt_bytes,
+        output_bytes=output_bytes,
+        shadow_triggers=shadow_triggers,
+        total_interactions=total_interactions,
+    )
+    return {
+        "authority": "OBSERVATIONAL_ONLY",
+        "metrics": [
+            {
+                "metric_id": m.metric_id,
+                "name": m.name,
+                "value": m.value,
+                "baseline": m.baseline,
+                "threshold": m.threshold,
+                "status": m.status,
+                "interpretation": m.interpretation,
+            }
+            for m in metrics
+        ],
+        "alerts": [m.name for m in metrics if m.status == "ALERT"],
+        "warnings": [m.name for m in metrics if m.status == "WARNING"],
+        "report": report(metrics),
+    }
 
 
 if __name__ == "__main__":
