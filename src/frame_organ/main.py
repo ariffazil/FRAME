@@ -2,20 +2,22 @@
 FRAME — Federation Reference & Assessment Measurement Engine
 Port: 18085 · Authority: ADVISORY_ONLY (measures, never mutates)
 
-Six chambers:
+Seven chambers:
   1. BASELINE — reference metrics for every organ/agent/floor
   2. PROBE    — live organ sampling
   3. COMPARE  — drift detection against baselines
   4. TREND    — time-series aggregation
   5. ALERT    — threshold escalation via SIGNAL
   6. REPORT   — daily institutional health brief
+  7. WITNESS  — field of view: paths read, consumption misties,
+                mechanical claim checks (evidence only, never verdict)
 """
 
 import time
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import JSONResponse
 
 from .baseline import (
@@ -33,6 +35,7 @@ from .alert import escalate_drift
 from .report import generate_report
 from .rejection import load_rejections, get_rejection_summary
 from .config import FRAME_PORT, FRAME_HOST, FRAME_LOG_LEVEL
+from .witness import path_witness, consumption_witness, claims_witness
 
 
 @asynccontextmanager
@@ -73,6 +76,7 @@ async def health():
             "report": "active",
             "rsi_verify": "active",
             "rejection": "active",
+            "witness": "active",
         },
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
@@ -301,6 +305,35 @@ async def frame_rejection_summary(hours: int = Query(default=24, ge=1, le=8760))
     """Compact rejection summary — counts only, no event detail."""
     summary = get_rejection_summary(hours=hours)
     return _observe(summary.model_dump(exclude={"recent_events"}))
+
+
+# ── Chamber 7: Witness ─────────────────────────────────────────────
+
+
+@app.get("/frame/witness/paths")
+async def frame_witness_paths():
+    """Which file each registered consumer actually reads; decoy/NOT_SET flags."""
+    return _observe(path_witness())
+
+
+@app.get("/frame/witness/consumption")
+async def frame_witness_consumption():
+    """Organ truth vs every human-facing surface; the mistie is the headline."""
+    return _observe(consumption_witness())
+
+
+@app.post("/frame/witness/claims")
+async def frame_witness_claims(request: Request):
+    """Mechanical check of atomic claims: {claims:[{text, evidence:{...}}]}.
+
+    Evidence kinds: file_exists, file_fresh, json_field. Anything unpointed is
+    UNVERIFIABLE. FRAME never executes the actor's commands.
+    """
+    body = await request.json()
+    claims = body.get("claims") if isinstance(body, dict) else None
+    if not isinstance(claims, list):
+        return JSONResponse(status_code=422, content={"error": "claims must be a list"})
+    return _observe(claims_witness(claims))
 
 
 # ── Entrypoint ──────────────────────────────────────────────────────

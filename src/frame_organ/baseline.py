@@ -29,7 +29,10 @@ DEFAULT_BASELINE = {
         "signal": {"health": "healthy", "latency_ms": 5, "chambers": 6},
         "arifflow": {"health": "healthy", "fq_optimal": 1.0, "fq_warning": 0.7, "fq_critical": 0.5},
         "fed": {"health": "healthy", "providers_alive": 8},
-        "flame": {"health": "live", "mode": "RM0-TOOLS-FREELOOP"},
+        "kabarkan": {"health": "healthy", "latency_ms": 10, "role": "telemetry_plane"},
+    },
+    "retired": {
+        "flame": {"status": "retired", "retired_date": "2026-09-04", "successor": "fed"}
     },
     "floors": {
         "f1_amanah": {"violations": 0, "holds": 0},

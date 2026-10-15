@@ -21,7 +21,8 @@ ORGAN_PORTS = {
     "signal": 18084,
     "arifflow": 7073,
     "fed": 7074,
-    "flame": 18901,
+    "kabarkan": 18902,
+    # flame RETIRED 2026-09-04 — removed from probe rotation (deprecation-registry.json)
 }
 
 # ── Probe ─────────────────────────────────────────────────────────
