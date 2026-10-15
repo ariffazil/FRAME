@@ -194,3 +194,18 @@ emit drift signal → AAA + arifOS + arifFlow + FED
 [![FRAME: OBSERVE](https://img.shields.io/badge/FRAME-OBSERVE_ONLY-9C27B0?style=flat-square)] (private repo — see arifOS FEDERATION.md)
 
 ---
+
+<!-- FEDERATION-STANDARD v2026-10-15 START :: 333-AGI audit :: source: organs.yaml + git + live probes :: regenerate: re-run audit -->
+## 🔗 Federation Identity (auto-audit 2026-10-15)
+| Field | Value |
+|---|---|
+| Organ | `frame` · CORE · federation_measurement |
+| Ports | 18085 |
+| Unit | frame-organ.service |
+| Authority ceiling | ADVISORY_ONLY |
+| Live (SOT probe @audit) | UP |
+| Repo HEAD @audit | `2c862e3 2026-10-07` |
+| Public MCP | — |
+| Rollback | — |
+| Flow graph | [FEDERATION-FLOW-GRAPH.md](../FEDERATION-FLOW-GRAPH.md) — peta semua organ + repo |
+<!-- FEDERATION-STANDARD v2026-10-15 END -->
