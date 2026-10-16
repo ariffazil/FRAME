@@ -11,189 +11,91 @@ license: AGPL-3.0
 truth_rule: live systemctl status frame-organ.service + /health endpoint beat any static count in prose
 -->
 
-> # ⚠️ ARCHIVED — DO NOT USE THIS REPOSITORY
-> 
-> **FRAME has been consolidated into the AAA federation state plane as of 2026-08-26.**
-> 
-> | Field | New location |
-> |-------|-------------|
-> | **Canonical source** | `ariffazil/AAA` repo → `federation/frame/` |
-> | **Doctrine** | [`AAA_FEDERATION_FRAME_BOUNDARY_ALIGNMENT.md`](https://github.com/ariffazil/AAA/blob/main/federation/AAA_FEDERATION_FRAME_BOUNDARY_ALIGNMENT.md) |
-> | **Substrate runtime** | `/root/AAA/federation/frame/` (was `/root/FRAME/`) |
-> | **Identity preserved** | systemd unit `frame-organ.service`, port `:18085`, AGPL-3.0 license, all 6 chambers |
-> 
-> **This repository is preserved READ-ONLY for historical and audit purposes.**
-> The substrate organ continues to serve at `:18085` via the AAA state plane.
-> 
-> For doctrine: substrate belongs in state plane, not as peer sovereign surface.
-> For migration history: see commit log (4 sprints, 2026-08-26).
-> 
-> ---
-> 
-> # 🧱 FRAME — Frame Organ Substrate
+> ### ⚠️ Archive mirror — read before using
+> **This GitHub repo is the read-only mirror of FRAME.** Canonical source: [`ariffazil/AAA`](https://github.com/ariffazil/AAA) → `federation/frame/` (organs.yaml, 2026-10-14) · migration: [`AAA_FEDERATION_FRAME_BOUNDARY_ALIGNMENT.md`](https://github.com/ariffazil/AAA/blob/main/federation/AAA_FEDERATION_FRAME_BOUNDARY_ALIGNMENT.md) (consolidated 2026-08-26).
+> The **live service never left**: `frame-organ.service` on `:18085`, deployed at `/opt/frame/app`, identity preserved (unit, port, license, chambers).
+> One post-archive exception: commit `ed5f9e4` (2026-10-15) rescued deployed-only code from `/opt/frame` to close a single-point-of-loss gap.
 
-[![Federation](https://img.shields.io/badge/Federation-v2026.08.04-0a7b83)](https://arifos.arif-fazil.com)
-[![🧱 FRAME](https://img.shields.io/badge/%F0%9F%A7%B1%20FRAME-Substrate-6b7280)](https://arif-fazil.com)
+<p align="center"><img src="docs/assets/frame-hero.png" alt="FRAME — many signals, one evidence ledger; evidence, never a verdict" width="1280"></p>
+
+# FRAME
+
+**Observe. Record. Witness.**
+
+FRAME is the independent observer of the arifOS federation: it baselines every organ, probes runtime state, detects drift and trends, and writes the findings into one evidence surface. *Measurement without a reference frame is just numbers.*
+
+[![Boundary service · not a constitutional organ](https://img.shields.io/badge/tier-boundary__service-6b7280.svg)](#role-invariant)
+[![Health probe :18085](https://img.shields.io/badge/health-probe_--_18085-6ea8fe.svg)](http://127.0.0.1:18085/health)
+[![Authority: observe ceiling](https://img.shields.io/badge/authority-observe__ceiling-amber.svg)](#role-invariant)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](./LICENSE)
 
-> **FRAME is the substrate. It scaffolds. It never decides.**
-> **DITEMPA BUKAN DIBERI — Forged, Not Given.**
+> ### Role invariant
+> **Its output is evidence, never a verdict.** FRAME observes from outside and reports; it never adjudicates, never executes, never mutates, never rewrites VAULT999 (it reads the seal head only).
+> It is a **boundary service, not a constitutional organ** — judgment belongs to [arifOS](https://github.com/ariffazil/arifOS), execution to [A-FORGE](https://github.com/ariffazil/A-FORGE).
+> *Authority ceiling drift, stated honestly:* organs.yaml records `ADVISORY_ONLY`, this repo's manifest records `OBSERVE_ONLY` — unresolved between SOTs; both ceilings forbid adjudication and execution, which is what the invariant above protects.
 
-**FRAME** is the substrate organ of the arifOS Federation. It provides capability primitives — scaffolding, lifecycle, and observability hooks — for the higher-order organs (arifOS, A-FORGE, AAA, GEOX, WEALTH, WELL). FRAME is OBSERVE_ONLY: it scaffolds and exposes primitives; it never adjudicates or executes irreversible actions.
+## What works today
+*(all claims measured 2026-10-16 unless dated otherwise)*
 
----
+- **Live observer at `:18085`** — `/health` reports `status: ok`, version 1.0.0, **9/9 chambers active** (baseline · probe · compare · trend · alert · report · rsi_verify · rejection · witness).
+- **Institutional baseline** covering 10 organs, established 2026-08-06T09:57:02Z, still the reference frame for drift comparison.
+- **Drift endpoints live** — `/frame/baseline`, `/frame/probe`, `/frame/drift`, `/frame/trend`, `/frame/alert`, `/frame/report` (organs.yaml interface map).
+- **Deployed-reality parity** — 2026-10-15 commits imported deployed-only code from `/opt/frame` (`ed5f9e4`) and synced `frame-organ.service` with what actually runs (`2c862e3`).
+- **CI governance** — Dependabot `uv` ecosystem + `uv lock --check` invariant workflow + constitutional-package denylist on auto-merge (F13 verdict 2026-08-10).
 
-## What FRAME Is
+## What is not yet proven
 
-| Capability | Examples |
-|------------|----------|
-| **Substrate lifecycle** | `frame-organ.service` — Python systemd unit, venv at `/opt/frame/venv`, app at `/opt/frame/app` |
-| **Build/dev tooling** | `Makefile` targets — `install`, `test`, `deploy`, `clean`, `health` |
-| **Federation primitive** | Common Python packaging (`pyproject.toml` + `uv.lock`), exposed for organ replication |
-| **OBSERVE_ONLY surface** | Health probe via systemd; no public MCP wire (FRAME is internal scaffolding) |
+- **Authority ceiling is contested** (`ADVISORY_ONLY` vs `OBSERVE_ONLY`) — see the invariant block. Until one SOT wins, treat the stricter ceiling as binding.
+- **Drift-detection accuracy** — no measured false-positive / false-negative rate for the compare chamber; no independent audit of the evidence it emits.
+- **Chamber census drift** — organs.yaml documents 6 chambers; the live endpoint serves 9. The endpoint wins here, but the registry has not been reconciled (2026-10-16).
+- **No public MCP wire from `:18085`** — organs.yaml notes the MCP surface is `:18086/mcp` while `:18085` serves `/health` only. `:18086` was MCP-OK at the 2026-10-14 audit; not re-proven today.
 
-## What FRAME Is NOT
-
-- ❌ Not an MCP server. FRAME does not expose public tools.
-- ❌ Not an execution shell. A-FORGE owns execution.
-- ❌ Not a judge. arifOS owns adjudication.
-
----
-
-## 🏛️ Federation Context
-
-```
-arifOS   = otak  ⚖️  (judge   — the brain,   :8088)
-A-FORGE  = tangan 👐  (forge  — the hands,  :7071)
-AAA      = mind  🏛️  (cockpit— the mind,   :3001)
-arifFLOW = saraf 🧠  (flow   — the nerves,  :7073)
-GEOX     = bumi  🌍  (earth  — the witness, :8081)
-WEALTH   = emas  💰  (capital— the interpreter, :18082)
-WELL     = hati  🫀  (vital  — the reflector, :18083)
-FRAME    = batu  🧱  (stone  — the substrate, :frame-organ.service)
-VAULT999 = tulang 💀  (bones  — the structure)
-```
-
-Source-of-truth: [`/root/AGENTS.md`](/root/AGENTS.md) and [`AAA/docs/ORGAN.md`](https://github.com/ariffazil/AAA).
-
----
-
-## 🔧 Operating
+## 30-second proof
 
 ```bash
-# Install (local dev)
-make install
-
-# Test
-make test
-
-# Deploy to live substrate (VPS af-forge)
-make deploy
-
-# Health
-make health
+curl -s http://127.0.0.1:18085/health
 ```
 
-The systemd unit `frame-organ.service` exposes lifecycle primitives; the `Makefile` is the canonical operator surface.
+Observed output (abridged, 2026-10-16T08:50:16Z):
 
----
-
-## 🛡️ CI Governance (F13 verdict 2026-08-10)
-
-FRAME follows the federation's CI governance pattern, adapted for Python (`pyproject.toml + uv.lock`):
-
-- `.github/dependabot.yml` — `uv` ecosystem; cooldown 3d; open-PRs 5; constitutional packages un-grouped (no `ignore:`)
-- `.github/workflows/dependabot-ci.yml` — unprivileged gate; runs ONLY on Dependabot PRs; SHA-bound probes
-- `.github/workflows/ci-uv-lock-invariant.yml` — universal `uv lock --check && uv sync --frozen`
-- `.github/workflows/auto-merge-dependabot.yml` — constitutional package denylist; F13 review the only merge path
-- Privileged workflows gated with `if: github.actor != 'dependabot[bot]' && != 'app/dependabot'`
-
-Reference: PR #1 (FRAME pattern replication).
-
----
-
-## 🧬 Source-of-Truth
-
-- **Canonical SOT:** [`/root/AGENTS.md`](/root/AGENTS.md) — federation-wide doctrine
-- **Organ SOT:** [`AAA/docs/ORGAN.md`](https://github.com/ariffazil/AAA) — topology + ports
-- **Live health:** `systemctl status frame-organ.service` + `journalctl -u frame-organ.service`
-- **Constitutional floors (F1–F13):** enforced by **arifOS** — FRAME consumes the verdict, does not adjudicate
-
----
-
-## 📜 Sovereignty & License
-
-- **License:** GNU Affero General Public License v3.0 (**AGPL-3.0**)
-- **Sovereign:** **Muhammad Arif bin Fazil** (F13 SOVEREIGN). Human veto is absolute.
-
-> *DITEMPA BUKAN DIBERI — Forged, Not Given.*  
-> *Truth must cool before it rules. 999 SEAL ALIVE.*
-
----
-
-## 🗺️ Where FRAME Sits in the Federation
-
-```mermaid
-flowchart LR
-  subgraph Meta["🧱 Substrate audit"]
-    FRAME[("🧱 FRAME<br/>substrate scaffolding<br/>reality-drift detection")]
-  end
-
-  subgraph Truth["💀 Truth"]
-    VAULT["VAULT999<br/>(seal head)"]
-  end
-
-  subgraph Reality["Reality check"]
-    ARIFOS["arifOS :8088<br/>runtime probe"]
-    AFORGE["A-FORGE :7071/72<br/>runtime probe"]
-    ORGANS["All 10 organs"]
-  end
-
-  FRAME -->|"seal head read"| VAULT
-  FRAME -->|"runtime probe"| ARIFOS
-  FRAME -->|"runtime probe"| AFORGE
-  FRAME -->|"reality-drift signal"| ORGANS
-
-  VAULT -->|"head_hash · canonical_entries"| FRAME
-  ARIFOS -->|"floor verdict · tools_loaded"| FRAME
-  AFORGE -->|"build_commit · runtime drift"| FRAME
-
-  classDef meta fill:#9C27B0,stroke:#000,color:#fff,stroke-width:2px
-  classDef truth fill:#000,stroke:#000,color:#fff
-  class FRAME meta
+```json
+{"status":"ok","organ":"frame","port":18085,"version":"1.0.0",
+ "baseline_organs":10,"baseline_established":"2026-08-06T09:57:02Z",
+ "chambers":{"baseline":"active","probe":"active","compare":"active","trend":"active","alert":"active","report":"active","rsi_verify":"active","rejection":"active","witness":"active"}}
 ```
 
-**FRAME internal loop:**
+Read-only. Operator surfaces: `make health` · `make probe` · `systemctl status frame-organ.service`.
 
-```
-seal-chain head read (from VAULT999 :999/verify)
-        │
-        ▼
-cross-verify (independent endpoint — AAA :3001 seal-chain)
-        │
-        ▼
-runtime probe (each organ /health)
-        │
-        ▼
-drift matrix (gap_count · staleness · floor_count · tools_count)
-        │
-        ▼
-emit drift signal → AAA + arifOS + arifFlow + FED
-```
+## What FRAME does (four jobs)
 
-**Hard rules (OBSERVE ceiling):**
-- FRAME never adjudicates. Drift signal is observation, not verdict.
-- FRAME never executes. Pure probe + report.
-- FRAME never rewrites VAULT999. It only reads head_hash.
+1. **Baseline** — hold the reference frame: expected state of every organ (`/frame/baseline`).
+2. **Probe & compare** — read live runtime state and diff it against baseline (`/frame/probe`, `/frame/drift`).
+3. **Trend & alert** — track drift over time and cross thresholds (`/frame/trend`, `/frame/alert`).
+4. **Report & witness** — emit period reports and independent witness records (`/frame/report`); the witness path is separation of powers — FRAME observes from outside while arifOS adjudicates.
 
----
+## Current verified state
 
-## 🏅 Federation Certification
+**Observed at 2026-10-16T08:50:16Z** — method: `curl -s http://127.0.0.1:18085/health` (runtime self-report; not an independent audit).
 
-[![Federation](https://img.shields.io/endpoint?url=https%3A%2F%2Farif-fazil.com%2F.well-known%2Fbadge%2Ffederation.json&style=flat-square&label=federation)](https://arifos.arif-fazil.com/health)
-[![FRAME: OBSERVE](https://img.shields.io/badge/FRAME-OBSERVE_ONLY-9C27B0?style=flat-square)] (private repo — see arifOS FEDERATION.md)
+| Fact | Value |
+|---|---|
+| Status | `ok` · `frame-organ.service` · version 1.0.0 |
+| Chambers | 9/9 active (incl. rsi_verify, rejection, witness — beyond the 6 in organs.yaml) |
+| Baseline | 10 organs · established 2026-08-06T09:57:02Z |
+| Mutations performed | 0 — observe ceiling; evidence only |
 
----
+Dynamic state is generated by probe. **If this section conflicts with the live endpoint, the endpoint wins.**
+
+## Development
+
+- **Runtime:** `/opt/frame/app` under `frame-organ.service` (Python 3.13, package `frame_organ`). Canonical source: [`ariffazil/AAA`](https://github.com/ariffazil/AAA) `federation/frame/`.
+- **Operator surface:** `Makefile` — `install` · `deploy` · `health` · `probe` · `clean`.
+- **Logs:** `journalctl -u frame-organ.service`.
+- **CI:** `.github/workflows/` — `dependabot-ci.yml`, `ci-uv-lock-invariant.yml`, `auto-merge-dependabot.yml` (F13 review the only merge path for constitutional packages).
+
+## License & federation identity
+
+GNU AGPL-3.0 — arifOS Federation. Sovereign: **Muhammad Arif bin Fazil** (F13 SOVEREIGN). *DITEMPA BUKAN DIBERI — Truth must cool before it rules.*
 
 <!-- FEDERATION-STANDARD v2026-10-15 START :: 333-AGI audit :: source: organs.yaml + git + live probes :: regenerate: re-run audit -->
 ## 🔗 Federation Identity (auto-audit 2026-10-15)
@@ -207,5 +109,5 @@ emit drift signal → AAA + arifOS + arifFlow + FED
 | Repo HEAD @audit | `2c862e3 2026-10-07` |
 | Public MCP | — |
 | Rollback | — |
-| Flow graph | [FEDERATION-FLOW-GRAPH.md](../FEDERATION-FLOW-GRAPH.md) — peta semua organ + repo |
+| Flow graph | `/root/FEDERATION-FLOW-GRAPH.md` (on-box federation map — outside this repo; relative link removed 2026-10-16) |
 <!-- FEDERATION-STANDARD v2026-10-15 END -->

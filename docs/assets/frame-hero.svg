@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" font-family="DejaVu Sans, Liberation Sans, sans-serif">
+  <defs>
+    <marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#5a6270"/>
+    </marker>
+    <marker id="ahb" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#6ea8fe"/>
+    </marker>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b1e24"/>
+      <stop offset="1" stop-color="#14161a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#fade)"/>
+  <g stroke="#232830" stroke-width="1">
+    <line x1="0" y1="260" x2="1280" y2="260"/><line x1="0" y1="460" x2="1280" y2="460"/>
+    <line x1="320" y1="0" x2="320" y2="640"/><line x1="960" y1="0" x2="960" y2="640"/>
+  </g>
+
+  <!-- Title -->
+  <text x="60" y="104" fill="#f2f4f7" font-size="58" font-weight="700">FRAME</text>
+  <text x="60" y="146" fill="#6ea8fe" font-size="22" letter-spacing="6">EVIDENCE, NEVER A VERDICT</text>
+  <text x="60" y="184" fill="#9aa4b2" font-size="18">observation without judgment · drift detection · independent witness</text>
+
+  <!-- Signal chips (many signals) -->
+  <g>
+    <rect x="60" y="230" width="240" height="38" rx="10" fill="#1d2229" stroke="#6ea8fe" stroke-width="1.5"/>
+    <text x="180" y="255" fill="#d7dce3" font-size="16" text-anchor="middle">baseline</text>
+    <rect x="60" y="280" width="240" height="38" rx="10" fill="#1d2229" stroke="#6ea8fe" stroke-width="1.5"/>
+    <text x="180" y="305" fill="#d7dce3" font-size="16" text-anchor="middle">probe · compare</text>
+    <rect x="60" y="330" width="240" height="38" rx="10" fill="#1d2229" stroke="#6ea8fe" stroke-width="1.5"/>
+    <text x="180" y="355" fill="#d7dce3" font-size="16" text-anchor="middle">trend</text>
+    <rect x="60" y="380" width="240" height="38" rx="10" fill="#1d2229" stroke="#6ea8fe" stroke-width="1.5"/>
+    <text x="180" y="405" fill="#d7dce3" font-size="16" text-anchor="middle">alert</text>
+    <rect x="60" y="430" width="240" height="38" rx="10" fill="#1d2229" stroke="#6ea8fe" stroke-width="1.5"/>
+    <text x="180" y="455" fill="#d7dce3" font-size="16" text-anchor="middle">report</text>
+    <rect x="60" y="480" width="240" height="38" rx="10" fill="#1d2229" stroke="#6ea8fe" stroke-width="1.5"/>
+    <text x="180" y="505" fill="#d7dce3" font-size="16" text-anchor="middle">witness</text>
+  </g>
+
+  <!-- Converging signal lines -->
+  <g stroke="#3a4351" stroke-width="1.5">
+    <line x1="300" y1="249" x2="452" y2="330"/>
+    <line x1="300" y1="299" x2="452" y2="345"/>
+    <line x1="300" y1="349" x2="452" y2="360"/>
+    <line x1="300" y1="399" x2="452" y2="375"/>
+    <line x1="300" y1="449" x2="452" y2="390"/>
+    <line x1="300" y1="499" x2="452" y2="405"/>
+  </g>
+
+  <!-- One evidence ledger -->
+  <g>
+    <rect x="455" y="255" width="290" height="230" rx="14" fill="#1d2229" stroke="#6ea8fe" stroke-width="2.5"/>
+    <text x="600" y="330" fill="#f2f4f7" font-size="25" font-weight="700" text-anchor="middle">ONE EVIDENCE</text>
+    <text x="600" y="362" fill="#f2f4f7" font-size="25" font-weight="700" text-anchor="middle">LEDGER</text>
+    <text x="600" y="402" fill="#9aa4b2" font-size="16" text-anchor="middle">append-only · provenance</text>
+    <text x="600" y="426" fill="#9aa4b2" font-size="16" text-anchor="middle">timestamps · never rewritten</text>
+  </g>
+
+  <!-- Observe ceiling -->
+  <g>
+    <line x1="747" y1="370" x2="888" y2="370" stroke="#6ea8fe" stroke-width="3" marker-end="url(#ahb)"/>
+    <rect x="815" y="322" width="10" height="96" rx="3" fill="#d4a853"/>
+    <text x="820" y="300" fill="#d4a853" font-size="13" font-weight="700" text-anchor="middle">OBSERVE CEILING</text>
+    <text x="820" y="432" fill="#9aa4b2" font-size="12" text-anchor="middle">evidence passes ·</text>
+    <text x="820" y="448" fill="#9aa4b2" font-size="12" text-anchor="middle">judgment does not</text>
+  </g>
+
+  <!-- Consumers -->
+  <g>
+    <rect x="895" y="305" width="325" height="130" rx="14" fill="#1d2229" stroke="#5a6270" stroke-width="2"/>
+    <text x="1057" y="352" fill="#f2f4f7" font-size="22" font-weight="700" text-anchor="middle">arifOS · AAA · arifFlow</text>
+    <text x="1057" y="388" fill="#9aa4b2" font-size="16" text-anchor="middle">they judge — elsewhere</text>
+    <text x="1057" y="412" fill="#9aa4b2" font-size="16" text-anchor="middle">FRAME's signal is input, not verdict</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="60" y="606" fill="#9aa4b2" font-size="17">observes from outside · never adjudicates · never mutates</text>
+  <text x="1220" y="606" fill="#6ea8fe" font-size="16" letter-spacing="3" text-anchor="end">DITEMPA BUKAN DIBERI</text>
+</svg>
