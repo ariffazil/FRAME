@@ -104,7 +104,7 @@ GNU AGPL-3.0 — arifOS Federation. Sovereign: **Muhammad Arif bin Fazil** (F13 
 | Organ | `frame` · CORE · federation_measurement |
 | Ports | 18085 |
 | Unit | frame-organ.service |
-| Authority ceiling | ADVISORY_ONLY |
+| Authority ceiling | OBSERVE_ONLY (binding: stricter ceiling wins — see gap row) |
 | Live (SOT probe @audit) | UP |
 | Repo HEAD @audit | `2c862e3 2026-10-07` |
 | Public MCP | — |
