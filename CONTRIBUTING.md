@@ -11,10 +11,10 @@ not an asset.
 ## How to Contribute
 
 1. **Fork** the repository you want to contribute to.
-2. **Branch** from `main` — feature branches must be descriptive.
+2. **Branch** from `master` — feature branches must be descriptive.
 3. **Commit** with conventional commit messages: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 4. **Test** your changes before opening a PR. Each organ has its own test suite.
-5. **Open a Pull Request** against `main`.
+5. **Open a Pull Request** against `master`.
 
 ## Pull Request Requirements
 
