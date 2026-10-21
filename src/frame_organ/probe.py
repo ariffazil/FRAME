@@ -102,7 +102,17 @@ async def probe_federation() -> FederationProbe:
             if isinstance(fq_data, dict):
                 fq = fq_data
 
-    healthy = sum(1 for o in organ_list if o.healthy)
+    # 2026-10-21: healthy = SIHAT, bukan sekadar "boleh dihubungi". Sebelum ini
+    # organ HTTP-200-dengan-status-degraded dikira healthy (healthy=9,
+    # degraded=0 padahal 4 rekod status=degraded) — "reachable" dipaparkan
+    # sebagai "sihat" (laporan luar 2026-10-21). Kelas kini koheren dan
+    # lengkap (status armada pelbagai: ok/healthy/ok-v3-vector):
+    #   healthy  = reachable DAN status != degraded (badan sihat secara deklarasi sendiri)
+    #   degraded = status == degraded (reachable tapi tak sihat, termasuk non-200)
+    #   down     = tak boleh dihubungi (exception/down/error)
+    healthy = sum(1 for o in organ_list if o.healthy and o.status != "degraded")
+    degraded = sum(1 for o in organ_list if o.status == "degraded")
+    down = sum(1 for o in organ_list if not o.healthy)
     total = len(organ_list)
 
     probe_duration = (time.monotonic() - start) * 1000
@@ -111,8 +121,8 @@ async def probe_federation() -> FederationProbe:
         timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         total_organs=total,
         healthy_organs=healthy,
-        degraded_organs=sum(1 for o in organ_list if not o.healthy and o.status != "down"),
-        down_organs=total - healthy,
+        degraded_organs=degraded,
+        down_organs=down,
         organs=organ_list,
         fq=fq,
         probe_duration_ms=round(probe_duration, 2),
