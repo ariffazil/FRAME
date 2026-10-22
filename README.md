@@ -111,3 +111,17 @@ GNU AGPL-3.0 — arifOS Federation. Sovereign: **Muhammad Arif bin Fazil** (F13 
 | Rollback | — |
 | Flow graph | `/root/FEDERATION-FLOW-GRAPH.md` (on-box federation map — outside this repo; relative link removed 2026-10-16) |
 <!-- FEDERATION-STANDARD v2026-10-15 END -->
+
+---
+
+## External Footprint & Discovery
+
+FRAME is the passive observer and drift-detection witness organ of the arifOS federation.
+
+- **Discoverable:** YES (GitHub repository)
+- **Authority Ceiling:** OBSERVE_ONLY (evidence and contrast only — never mutates terminal states)
+- **Inspectable & Forkable:** YES
+- **Independent Validation:** NOT YET ESTABLISHED
+
+Canonical Witness Ledger: [EXTERNAL_WITNESS_LEDGER.md](https://github.com/ariffazil/arifOS/blob/main/docs/EXTERNAL_WITNESS_LEDGER.md)
+
