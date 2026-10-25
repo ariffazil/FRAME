@@ -7,7 +7,7 @@ SERVICE := frame-organ.service
 install:
 	@echo "=== FRAME Organ: Install ==="
 	python3 -m venv $(VENV)
-	$(VENV)/bin/pip install -e /root/FRAME/
+	$(VENV)/bin/pip install --force-reinstall /root/FRAME/
 	@echo "VENV ready at $(VENV)"
 
 deploy:
