@@ -48,7 +48,7 @@ FRAME is the independent observer of the arifOS federation: it baselines every o
 - **Authority ceiling is contested** (`ADVISORY_ONLY` vs `OBSERVE_ONLY`) — see the invariant block. Until one SOT wins, treat the stricter ceiling as binding.
 - **Drift-detection accuracy** — no measured false-positive / false-negative rate for the compare chamber; no independent audit of the evidence it emits.
 - **Chamber census drift** — organs.yaml documents 6 chambers; the live endpoint serves 9. The endpoint wins here, but the registry has not been reconciled (2026-10-16).
-- **No public MCP wire from `:18085`** — organs.yaml notes the MCP surface is `:18086/mcp` while `:18085` serves `/health` only. `:18086` was MCP-OK at the 2026-10-14 audit; not re-proven today.
+- **No public MCP wire from `:18085`** — organs.yaml notes the MCP surface is `:18086/mcp` while `:18085` serves `/health` only. `:18086` MCP-OK at the 2026-10-14 audit and **re-proven 2026-10-30** (initialize handshake → HTTP 200; `frame-organ.service` active).
 
 ## 30-second proof
 
