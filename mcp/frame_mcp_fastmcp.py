@@ -21,9 +21,10 @@ from __future__ import annotations
 import json
 import urllib.request
 import urllib.error
-from typing import Any
+from typing import Any, Literal
 
 from fastmcp import FastMCP
+from pydantic import Field
 
 FRAME_HOST = "127.0.0.1"
 FRAME_PORT = 18085
@@ -51,40 +52,49 @@ def _frame_get(path: str) -> dict[str, Any]:
         return {"error": f"FRAME daemon unreachable: {e.reason}"}
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True, "openWorldHint": False})
 def frame_health() -> dict[str, Any]:
-    """FRAME observer organ health — chamber status, baseline info,
-    version. Read-only. OBSERVE_ONLY authority."""
+    """FRAME organ self-health — chamber status, baseline info, version.
+    Use for FRAME itself; for federation organ liveness use frame_probe.
+    Read-only. OBSERVE_ONLY authority — evidence, never a verdict."""
     return _frame_get("/health")
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True, "openWorldHint": True})
 def frame_probe() -> dict[str, Any]:
-    """Probe all federation organs and return live health snapshot.
-    Shows which organs are up, latency, FQ state.
-    Evidence only — never a verdict."""
+    """Probe all federation organs — live point-in-time snapshot (up/down,
+    latency, FQ state). For divergence from expected state use frame_drift;
+    for history use frame_trend. Evidence only — never a verdict."""
     return _frame_get("/frame/probe")
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True, "openWorldHint": True})
 def frame_drift() -> dict[str, Any]:
-    """Run full federation probe and compare against baselines.
-    Returns drift signals — evidence of deviation from expected state.
+    """Run full federation probe and compare against baselines — answers
+    'what drifted from expected state?'. For the raw snapshot use frame_probe;
+    for the baseline values themselves use frame_baseline; for AGENT-session
+    metrics (not organs) use frame_behavioral_drift.
     OBSERVATIONAL_ONLY: drift is evidence, not a verdict."""
     return _frame_get("/frame/drift")
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True, "openWorldHint": False})
 def frame_baseline() -> dict[str, Any]:
-    """Get baseline metrics for all tracked organs and floors.
-    Baselines are the expected-state reference for drift detection."""
+    """Get the baseline metrics themselves — the expected-state reference for
+    drift detection (all tracked organs and floors). For live comparison
+    against these baselines use frame_drift. Read-only."""
     return _frame_get("/frame/baseline")
 
 
-@mcp.tool()
-def frame_trend(hours: int = 24) -> dict[str, Any]:
-    """Federation trend over specified time window.
-    Shows FQ, organ health, latency trends. Evidence only.
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True, "openWorldHint": True})
+def frame_trend(
+    hours: int = Field(
+        default=24, ge=1, le=168, description="Time window in hours (1-168, default 24)"
+    ),
+) -> dict[str, Any]:
+    """Federation trend over a time window — FQ, organ health and latency as
+    a time series. Use for 'how did it change?'; for the current instant use
+    frame_probe. Evidence only — never a verdict.
 
     Args:
         hours: Time window in hours (1-168, default 24)
@@ -92,27 +102,29 @@ def frame_trend(hours: int = 24) -> dict[str, Any]:
     return _frame_get(f"/frame/trend?hours={hours}")
 
 
-@mcp.tool()
-def frame_report(period: str = "daily") -> dict[str, Any]:
-    """Generate institutional health report (daily or weekly).
-    Combines probe + drift + trend into a single evidence report.
-    OBSERVATIONAL_ONLY.
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True, "openWorldHint": True})
+def frame_report(period: Literal["daily", "weekly"] = "daily") -> dict[str, Any]:
+    """Generate the institutional health report — combines probe + drift +
+    trend into one periodic evidence packet. For a single component call
+    frame_probe / frame_drift / frame_trend directly. OBSERVATIONAL_ONLY —
+    evidence, never a verdict.
 
     Args:
-        period: 'daily' or 'weekly'
+        period: 'daily' or 'weekly' (enum-enforced on the wire; invalid values are rejected)
     """
     return _frame_get(f"/frame/report/{period}")
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True, "openWorldHint": False})
 def frame_rsi_verify() -> dict[str, Any]:
-    """Verify trend time-series monotonicity and cross-restart integrity.
-    F11 AUDITABILITY guard — detects silent rollback, truncation, or replay.
-    Read-only, pure verification."""
+    """Verify FRAME's own trend time-series — monotonicity and cross-restart
+    integrity (F11 AUDITABILITY guard: detects silent rollback, truncation,
+    replay of FRAME records). Not a probe of other organs — use frame_probe
+    for that. Read-only, pure verification; evidence, never a verdict."""
     return _frame_get("/frame/rsi-verify")
 
 
-@mcp.tool()
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True, "openWorldHint": False})
 def frame_behavioral_drift(
     tool_calls: list[str] | None = None,
     agent_responses: list[str] | None = None,
@@ -122,9 +134,10 @@ def frame_behavioral_drift(
     shadow_triggers: int = 0,
     total_interactions: int = 0,
 ) -> dict[str, Any]:
-    """Compute behavioral drift metrics for an agent session.
-    Returns 5 metrics: tool_call_entropy, question_back_rate,
-    verbosity_drift, receipt_output_ratio, shadow_activation_rate.
+    """Compute behavioral drift metrics for an AGENT SESSION (not organs —
+    for organ deviation use frame_drift). Returns 5 metrics:
+    tool_call_entropy, question_back_rate, verbosity_drift,
+    receipt_output_ratio, shadow_activation_rate. Pure computation, no I/O.
     OBSERVATIONAL_ONLY — evidence, never a verdict.
 
     Args:
@@ -137,6 +150,7 @@ def frame_behavioral_drift(
         total_interactions: Total interactions in session
     """
     import sys
+
     sys.path.insert(0, "/root/arifOS/arifosmcp/tools")
     from frame_behavioral_drift import compute_all, report
 
