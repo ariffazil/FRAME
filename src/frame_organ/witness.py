@@ -249,11 +249,29 @@ def consumption_witness() -> dict[str, Any]:
 # ── 3. CLAIM witness: mechanical check of atomic claims ─────────────
 
 
+
+def _is_local_path(path: str) -> bool:
+    """True when path names a local filesystem location, not a remote URL.
+
+    2026-11-12 fix: os.path.abspath('https://x') collapses to <cwd>/https:/x,
+    which sits inside witness root /opt/frame — URL claims masqueraded as
+    in-reach files and printed CONTRADICTED on fetch failure. Scheme-detect
+    first; remote surfaces are honestly UNVERIFIABLE (FRAME witnesses local
+    files only).
+    """
+    import re as _re
+    return not _re.match(r"^[A-Za-z][A-Za-z0-9+.\-]*://", str(path or ""))
+
+
 def _check_claim(claim: dict[str, Any]) -> dict[str, Any]:
     ev = claim.get("evidence") or {}
     kind = ev.get("check")
     path = ev.get("path", "")
     out = {"claim": str(claim.get("text", ""))[:200], "evidence": ev}
+    if kind in ("file_exists", "file_fresh", "json_field") and not _is_local_path(path):
+        out["status"] = "UNVERIFIABLE"
+        out["note"] = "URL/remote surface outside FRAME file-witness reach (local files only); not a falsification"
+        return out
     try:
         if kind == "file_exists":
             if not path:

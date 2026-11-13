@@ -1,0 +1,55 @@
+{
+  "repo": "FRAME",
+  "generated_at": "2026-11-02T08:25:28Z",
+  "generator": "claims_drift_check.py v0.1 (FI-008 2026-11-02; EXTRACTION-MAP P0-b)",
+  "license_note": "generated artifact \u2014 regenerate, never hand-edit",
+  "claims": [
+    {
+      "claim_id": "surface.tool_count",
+      "statement": "Live exposed tool count",
+      "value": 8,
+      "derivation": "MCP tools/list 127.0.0.1:18086/mcp",
+      "evidence_path": "runtime",
+      "stability": "runtime-derived",
+      "observed_at": "2026-11-02T08:25:28Z"
+    },
+    {
+      "claim_id": "docs.readme_tool_claims",
+      "statement": "Counts asserted in README.md",
+      "value": [],
+      "derivation": "regex '\\d+ tools' over README.md",
+      "evidence_path": "README.md",
+      "stability": "generated"
+    },
+    {
+      "claim_id": "docs.llms_txt",
+      "statement": "Machine discovery surface present",
+      "value": {
+        "exists": false,
+        "lines": 0
+      },
+      "derivation": "filesystem",
+      "evidence_path": "llms.txt",
+      "stability": "generated"
+    },
+    {
+      "claim_id": "identity.agent_card",
+      "statement": "A2A agent-card present + declared count",
+      "value": {
+        "path": null,
+        "declared": null
+      },
+      "derivation": "glob + json parse",
+      "evidence_path": "ABSENT",
+      "stability": "generated"
+    },
+    {
+      "claim_id": "surface.prefix_violations",
+      "statement": "Tools outside 'frame_' namespace",
+      "value": [],
+      "derivation": "prefix filter over tools/list",
+      "evidence_path": "runtime",
+      "stability": "runtime-derived"
+    }
+  ]
+}
