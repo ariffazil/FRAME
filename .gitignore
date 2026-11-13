@@ -2,3 +2,4 @@ __pycache__/
 
 # setuptools build artifact
 *.egg-info/
+build/
