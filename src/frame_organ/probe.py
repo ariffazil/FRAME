@@ -11,6 +11,20 @@ from pydantic import BaseModel
 
 from .config import ORGAN_PORTS, PROBE_TIMEOUT_SECONDS
 
+# 2026-10-28: organs whose /health is a DEEP dependency sweep rather than a
+# liveness answer. FED :4000 proxies to litellm :4013 where an authenticated
+# /health sweeps upstream providers (measured >10 s on a swapping host) while
+# /health/liveliness answers in 1.8 ms. Probing the deep path from a monitor
+# records "provider slow" as "FED slow" — a different claim.
+HEALTH_PATH_OVERRIDES: dict[str, str] = {
+    "fed": "/health/liveliness",
+}
+
+# Kept explicit so the omission is a decision, not a side effect: this monitor
+# no longer exercises FED's provider sweep. If that sweep needs an alarm, it
+# needs its own probe with its own threshold — not a slower organ latency.
+DEEP_HEALTH_ORGANS: tuple[str, ...] = ("fed",)
+
 
 class OrganProbe(BaseModel):
     organ: str
@@ -20,6 +34,9 @@ class OrganProbe(BaseModel):
     status: str = "unknown"
     details: dict = {}
     error: str = ""
+    # 2026-10-28: which path this latency measured. Without it, swapping a deep
+    # health check for a liveness check silently changes what latency_ms means.
+    probe_path: str = "/health"
 
 
 class FederationProbe(BaseModel):
@@ -34,18 +51,40 @@ class FederationProbe(BaseModel):
 
 
 async def probe_organ(organ: str, port: int) -> OrganProbe:
-    """Probe a single organ's /health endpoint."""
+    """Probe a single organ's health endpoint.
+
+    2026-10-28 — WHY SOME ORGANS USE A CHEAPER PATH.
+
+    FED :4000 proxies to litellm :4013. Unauthenticated :4013/health answers in
+    17 ms (401) while an AUTHENTICATED /health performs a full upstream-provider
+    sweep and was measured hanging past 10 s on this host. FRAME probes from
+    127.0.0.1, which HAProxy injects with the master key — so FRAME was probing
+    the expensive branch and recording it as fed latency. /health/liveliness
+    answers in 1.8 ms and /health/readiness in 9.7 ms.
+
+    The probe path is recorded on every OrganProbe so the metric names what it
+    measured. The deep provider sweep still needs an owner — dropping it here
+    would trade a slow signal for a blind one; see DEEP_HEALTH_ORGANS.
+    """
+    path = HEALTH_PATH_OVERRIDES.get(organ, "/health")
     start = time.monotonic()
     try:
         async with httpx.AsyncClient(timeout=PROBE_TIMEOUT_SECONDS) as client:
-            resp = await client.get(f"http://127.0.0.1:{port}/health")
+            resp = await client.get(f"http://127.0.0.1:{port}{path}")
             latency = (time.monotonic() - start) * 1000
             data = (
                 resp.json()
                 if resp.headers.get("content-type", "").startswith("application/json")
                 else {}
             )
-            status = data.get("status", "ok") if resp.status_code == 200 else "degraded"
+            # litellm's /health/liveliness answers with a bare JSON string
+            # ("I'm alive!"), not an object — .get() on it raises and would be
+            # recorded as "down". Accept any 200 as alive; only read `status`
+            # when the body really is a mapping.
+            if resp.status_code == 200 and isinstance(data, dict):
+                status = data.get("status", "ok")
+            else:
+                status = "ok" if resp.status_code == 200 else "degraded"
             return OrganProbe(
                 organ=organ,
                 port=port,
@@ -53,6 +92,7 @@ async def probe_organ(organ: str, port: int) -> OrganProbe:
                 latency_ms=round(latency, 2),
                 status=status,
                 details=data if isinstance(data, dict) else {"raw_status": resp.status_code},
+                probe_path=path,
             )
     except Exception as exc:
         latency = (time.monotonic() - start) * 1000
@@ -64,6 +104,7 @@ async def probe_organ(organ: str, port: int) -> OrganProbe:
             status="down",
             details={},
             error=str(exc)[:120],
+            probe_path=path,
         )
 
 
