@@ -54,7 +54,7 @@ def compare_organ(probe: OrganProbe) -> list[DriftSignal]:
 
     # Latency drift
     bl_lat = baseline.get("latency_ms", 0)
-    if bl_lat > 0 and probe.latency_ms > bl_lat * 3:
+    if bl_lat > 0 and probe.latency_ms > max(bl_lat * 3, 250.0):
         signals.append(
             DriftSignal(
                 organ=probe.organ,
