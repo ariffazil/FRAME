@@ -1,15 +1,17 @@
 """
 FRAME — Federation Reference & Assessment Measurement Engine
-Port: 18085 · Authority: ADVISORY_ONLY (measures, never mutates)
+Port: 18085 · Authority: OBSERVE_ONLY (measures, never mutates)
 
-Seven chambers:
-  1. BASELINE — reference metrics for every organ/agent/floor
-  2. PROBE    — live organ sampling
-  3. COMPARE  — drift detection against baselines
-  4. TREND    — time-series aggregation
-  5. ALERT    — threshold escalation via SIGNAL
-  6. REPORT   — daily institutional health brief
-  7. WITNESS  — mechanical claim checks; evidence only, never verdict
+Nine active chambers (plus pre-flight web gate):
+  1. BASELINE   — reference metrics for every organ/gateway/floor
+  2. PROBE      — live organ and shared-tool sampling
+  3. COMPARE    — drift detection against baselines
+  4. TREND      — time-series aggregation
+  5. ALERT      — threshold escalation via SIGNAL
+  6. REPORT     — daily/weekly institutional health brief
+  7. RSI_VERIFY — trend monotonicity & rollback guard
+  8. REJECTION  — unified organ rejection telemetry
+  9. WITNESS    — mechanical path, consumption & claim checks
 """
 
 import time

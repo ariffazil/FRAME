@@ -10,10 +10,12 @@ FRAME_HOST = os.getenv("FRAME_HOST", "127.0.0.1")
 FRAME_PORT = int(os.getenv("FRAME_PORT", "18085"))
 FRAME_LOG_LEVEL = os.getenv("FRAME_LOG_LEVEL", "info")
 
-# ── Organ Topology (ports to probe) ───────────────────────────────
+# ── Organ & Agentic System Topology (ports to probe) ──────────────
 ORGAN_PORTS = {
+    # Core governance, domain & telemetry organs
     "arifos": 8088,
     "aforge": 7071,
+    "aforge_mcp": 7072,
     "geox": 8081,
     "wealth": 18082,
     "well": 18083,
@@ -21,11 +23,17 @@ ORGAN_PORTS = {
     "signal": 18084,
     "arifflow": 7073,
     "fed": 7074,
-    "flame": 18901,
+    "hermes": 18087,
+    "chron": 18102,
+    # Shared model & agentic-tools gateway planes
+    "litellm": 4000,
+    "agentic_tools": 18430,
+    # flame (:18901) RETIRED 2026-09-04 — legacy lane decommissioned, no systemd
+    # unit exists and nothing listens. Removed 2026-10-20.
 }
 
 # ── Probe ─────────────────────────────────────────────────────────
-PROBE_TIMEOUT_SECONDS = int(os.getenv("FRAME_PROBE_TIMEOUT", "3"))
+PROBE_TIMEOUT_SECONDS = int(os.getenv("FRAME_PROBE_TIMEOUT", "5"))
 PROBE_DEFAULT_INTERVAL_MINUTES = int(os.getenv("FRAME_PROBE_INTERVAL", "15"))
 
 # ── Baseline ──────────────────────────────────────────────────────

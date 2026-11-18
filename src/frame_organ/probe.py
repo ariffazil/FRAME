@@ -1,6 +1,6 @@
 """
 FRAME — Chamber 2: PROBE
-Live organ sampling. Hits every organ's /health endpoint and returns structured metrics.
+Live sampling of all federation organs, agent gateways, and shared tools.
 """
 
 import time
@@ -11,19 +11,15 @@ from pydantic import BaseModel
 
 from .config import ORGAN_PORTS, PROBE_TIMEOUT_SECONDS
 
-# 2026-10-28: organs whose /health is a DEEP dependency sweep rather than a
-# liveness answer. FED :4000 proxies to litellm :4013 where an authenticated
-# /health sweeps upstream providers (measured >10 s on a swapping host) while
-# /health/liveliness answers in 1.8 ms. Probing the deep path from a monitor
-# records "provider slow" as "FED slow" — a different claim.
+# Organs/gateways whose /health is a deep dependency sweep rather than a fast
+# liveness answer. FED (:7074) answers /health directly; LiteLLM (:4000) sweeps
+# upstream providers on authenticated /health, whereas /health/liveliness
+# answers immediately with a bare string ("I'm alive!").
 HEALTH_PATH_OVERRIDES: dict[str, str] = {
-    "fed": "/health/liveliness",
+    "litellm": "/health/liveliness",
 }
 
-# Kept explicit so the omission is a decision, not a side effect: this monitor
-# no longer exercises FED's provider sweep. If that sweep needs an alarm, it
-# needs its own probe with its own threshold — not a slower organ latency.
-DEEP_HEALTH_ORGANS: tuple[str, ...] = ("fed",)
+DEEP_HEALTH_ORGANS: tuple[str, ...] = ("litellm",)
 
 
 class OrganProbe(BaseModel):
@@ -34,8 +30,7 @@ class OrganProbe(BaseModel):
     status: str = "unknown"
     details: dict = {}
     error: str = ""
-    # 2026-10-28: which path this latency measured. Without it, swapping a deep
-    # health check for a liveness check silently changes what latency_ms means.
+    # Which path this probe measured so swapping deep vs liveness paths stays explicit.
     probe_path: str = "/health"
 
 
@@ -51,21 +46,7 @@ class FederationProbe(BaseModel):
 
 
 async def probe_organ(organ: str, port: int) -> OrganProbe:
-    """Probe a single organ's health endpoint.
-
-    2026-10-28 — WHY SOME ORGANS USE A CHEAPER PATH.
-
-    FED :4000 proxies to litellm :4013. Unauthenticated :4013/health answers in
-    17 ms (401) while an AUTHENTICATED /health performs a full upstream-provider
-    sweep and was measured hanging past 10 s on this host. FRAME probes from
-    127.0.0.1, which HAProxy injects with the master key — so FRAME was probing
-    the expensive branch and recording it as fed latency. /health/liveliness
-    answers in 1.8 ms and /health/readiness in 9.7 ms.
-
-    The probe path is recorded on every OrganProbe so the metric names what it
-    measured. The deep provider sweep still needs an owner — dropping it here
-    would trade a slow signal for a blind one; see DEEP_HEALTH_ORGANS.
-    """
+    """Probe a single organ or gateway health endpoint."""
     path = HEALTH_PATH_OVERRIDES.get(organ, "/health")
     start = time.monotonic()
     try:
@@ -77,18 +58,25 @@ async def probe_organ(organ: str, port: int) -> OrganProbe:
                 if resp.headers.get("content-type", "").startswith("application/json")
                 else {}
             )
-            # litellm's /health/liveliness answers with a bare JSON string
-            # ("I'm alive!"), not an object — .get() on it raises and would be
-            # recorded as "down". Accept any 200 as alive; only read `status`
-            # when the body really is a mapping.
             if resp.status_code == 200 and isinstance(data, dict):
                 status = data.get("status", "ok")
+                if data.get("degraded_mode") is True and status in ("ok", "healthy"):
+                    status = "degraded"
             else:
                 status = "ok" if resp.status_code == 200 else "degraded"
+
+            # F2 coherence rule: reachable != healthy. An organ answering 200
+            # with status="degraded" or non-200 HTTP is DEGRADED, not healthy.
+            is_healthy = resp.status_code == 200 and status not in (
+                "degraded",
+                "down",
+                "unhealthy",
+                "error",
+            )
             return OrganProbe(
                 organ=organ,
                 port=port,
-                healthy=resp.status_code == 200,
+                healthy=is_healthy,
                 latency_ms=round(latency, 2),
                 status=status,
                 details=data if isinstance(data, dict) else {"raw_status": resp.status_code},
@@ -111,9 +99,7 @@ async def probe_organ(organ: str, port: int) -> OrganProbe:
 async def probe_federation() -> FederationProbe:
     """Probe all federation organs and return a complete health snapshot."""
     start = time.monotonic()
-    organs = []
 
-    # Probe all organs concurrently
     import asyncio
 
     tasks = {organ: probe_organ(organ, port) for organ, port in ORGAN_PORTS.items()}
@@ -128,8 +114,9 @@ async def probe_federation() -> FederationProbe:
                     port=ORGAN_PORTS[organ],
                     healthy=False,
                     latency_ms=0,
-                    status="error",
+                    status="down",
                     error=str(result)[:120],
+                    probe_path=HEALTH_PATH_OVERRIDES.get(organ, "/health"),
                 )
             )
         else:
@@ -143,18 +130,14 @@ async def probe_federation() -> FederationProbe:
             if isinstance(fq_data, dict):
                 fq = fq_data
 
-    # 2026-10-21: healthy = SIHAT, bukan sekadar "boleh dihubungi". Sebelum ini
-    # organ HTTP-200-dengan-status-degraded dikira healthy (healthy=9,
-    # degraded=0 padahal 4 rekod status=degraded) — "reachable" dipaparkan
-    # sebagai "sihat" (laporan luar 2026-10-21). Kelas kini koheren dan
-    # lengkap (status armada pelbagai: ok/healthy/ok-v3-vector):
-    #   healthy  = reachable DAN status != degraded (badan sihat secara deklarasi sendiri)
-    #   degraded = status == degraded (reachable tapi tak sihat, termasuk non-200)
-    #   down     = tak boleh dihubungi (exception/down/error)
-    healthy = sum(1 for o in organ_list if o.healthy and o.status != "degraded")
-    degraded = sum(1 for o in organ_list if o.status == "degraded")
-    down = sum(1 for o in organ_list if not o.healthy)
+    # Partition counts cleanly so healthy + degraded + down == total.
+    healthy = sum(1 for o in organ_list if o.healthy)
+    degraded = sum(1 for o in organ_list if not o.healthy and o.status != "down")
+    down = sum(1 for o in organ_list if not o.healthy and o.status == "down")
     total = len(organ_list)
+    assert healthy + degraded + down == total, (
+        f"Conservation invariant violated: {healthy}+{degraded}+{down} != {total}"
+    )
 
     probe_duration = (time.monotonic() - start) * 1000
 

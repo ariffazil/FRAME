@@ -1,46 +1,44 @@
 {
   "repo": "FRAME",
-  "generated_at": "2026-11-02T08:25:28Z",
-  "generator": "claims_drift_check.py v0.1 (FI-008 2026-11-02; EXTRACTION-MAP P0-b)",
-  "license_note": "generated artifact \u2014 regenerate, never hand-edit",
+  "generated_at": "2026-11-18T07:30:00Z",
+  "generator": "frame_witness_align v0.2 (2026-11-18)",
+  "license_note": "generated artifact — regenerate from live :18085 and :18086/mcp, never hand-invent counts",
   "claims": [
     {
       "claim_id": "surface.tool_count",
-      "statement": "Live exposed tool count",
-      "value": 8,
+      "statement": "Live exposed MCP tool count on :18086/mcp",
+      "value": 10,
       "derivation": "MCP tools/list 127.0.0.1:18086/mcp",
-      "evidence_path": "runtime",
+      "evidence_path": "mcp/frame_mcp_fastmcp.py",
       "stability": "runtime-derived",
-      "observed_at": "2026-11-02T08:25:28Z"
+      "observed_at": "2026-11-18T07:30:00Z"
+    },
+    {
+      "claim_id": "surface.tracked_targets",
+      "statement": "Federated organs and shared gateways probed by FRAME",
+      "value": 14,
+      "derivation": "len(frame_organ.config.ORGAN_PORTS)",
+      "evidence_path": "src/frame_organ/config.py",
+      "stability": "code-derived",
+      "observed_at": "2026-11-18T07:30:00Z"
     },
     {
       "claim_id": "docs.readme_tool_claims",
-      "statement": "Counts asserted in README.md",
-      "value": [],
-      "derivation": "regex '\\d+ tools' over README.md",
+      "statement": "Read-only FastMCP tools asserted in README.md",
+      "value": [
+        "frame_health",
+        "frame_probe",
+        "frame_drift",
+        "frame_baseline",
+        "frame_trend",
+        "frame_report",
+        "frame_rsi_verify",
+        "frame_behavioral_drift",
+        "frame_witness",
+        "frame_rejections"
+      ],
+      "derivation": "frame_mcp_fastmcp.py tool list",
       "evidence_path": "README.md",
-      "stability": "generated"
-    },
-    {
-      "claim_id": "docs.llms_txt",
-      "statement": "Machine discovery surface present",
-      "value": {
-        "exists": false,
-        "lines": 0
-      },
-      "derivation": "filesystem",
-      "evidence_path": "llms.txt",
-      "stability": "generated"
-    },
-    {
-      "claim_id": "identity.agent_card",
-      "statement": "A2A agent-card present + declared count",
-      "value": {
-        "path": null,
-        "declared": null
-      },
-      "derivation": "glob + json parse",
-      "evidence_path": "ABSENT",
       "stability": "generated"
     },
     {
@@ -48,7 +46,7 @@
       "statement": "Tools outside 'frame_' namespace",
       "value": [],
       "derivation": "prefix filter over tools/list",
-      "evidence_path": "runtime",
+      "evidence_path": "mcp/frame_mcp_fastmcp.py",
       "stability": "runtime-derived"
     }
   ]

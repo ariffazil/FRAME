@@ -5,13 +5,16 @@ FRAME is OBSERVE_ONLY — its output is evidence, never a verdict.
 Every payload carries authority="OBSERVATIONAL_ONLY".
 
 Tools:
-  frame_health      — GET /health: chamber status, baseline info
-  frame_probe       — GET /frame/probe: probe all federation organs
-  frame_drift       — GET /frame/drift: compare live state vs baselines
-  frame_baseline    — GET /frame/baseline: get all baselines
-  frame_trend       — GET /frame/trend: federation trend over time window
-  frame_report      — GET /frame/report/{period}: institutional health report
-  frame_rsi_verify  — GET /frame/rsi-verify: verdict monotonicity check
+  frame_health           — GET /health: chamber status, baseline info
+  frame_probe            — GET /frame/probe: probe all federation organs & gateways
+  frame_drift            — GET /frame/drift: compare live state vs baselines
+  frame_baseline         — GET /frame/baseline: get all baselines
+  frame_trend            — GET /frame/trend: federation trend over time window
+  frame_report           — GET /frame/report/{period}: institutional health report
+  frame_rsi_verify       — GET /frame/rsi-verify: verdict monotonicity check
+  frame_behavioral_drift — pure session behavioral drift metrics
+  frame_witness          — GET /frame/witness/{paths|consumption}: consumer truth check
+  frame_rejections       — GET /frame/rejections[/summary]: organ rejection telemetry
 
 DITEMPA BUKAN DIBERI — Forged, Not Given.
 """
@@ -19,8 +22,9 @@ DITEMPA BUKAN DIBERI — Forged, Not Given.
 from __future__ import annotations
 
 import json
-import urllib.request
 import urllib.error
+import urllib.parse
+import urllib.request
 from typing import Any, Literal
 
 from fastmcp import FastMCP
@@ -31,7 +35,7 @@ FRAME_PORT = 18085
 
 mcp = FastMCP(
     name="frame-mcp",
-    version="2026.09.14",
+    version="2026.11.18",
     instructions=(
         "FRAME — Observer organ for arifOS Federation. "
         "Authority: OBSERVE_ONLY. Drift detection, evidence gathering. "
@@ -181,6 +185,32 @@ def frame_behavioral_drift(
         "warnings": [m.name for m in metrics if m.status == "WARNING"],
         "report": report(metrics),
     }
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True, "openWorldHint": False})
+def frame_witness(
+    scope: Literal["consumption", "paths"] = "consumption",
+) -> dict[str, Any]:
+    """Read FRAME witness chamber output — compares organ truth against consumer
+    paths or human-facing surfaces (`consumption` or `paths`). Read-only.
+    OBSERVATIONAL_ONLY — evidence, never a verdict."""
+    return _frame_get(f"/frame/witness/{scope}")
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True, "openWorldHint": False})
+def frame_rejections(
+    hours: int = Field(default=24, ge=1, le=8760, description="Lookback window in hours (1-8760)"),
+    summary_only: bool = Field(default=True, description="Return counts summary only (default True)"),
+    organ: str | None = Field(default=None, description="Optional organ filter when summary_only=False"),
+) -> dict[str, Any]:
+    """Read unified organ rejection telemetry across the federation.
+    Read-only. OBSERVATIONAL_ONLY — evidence, never a verdict."""
+    if summary_only:
+        return _frame_get(f"/frame/rejections/summary?hours={hours}")
+    params: dict[str, Any] = {"hours": hours}
+    if organ:
+        params["organ"] = organ
+    return _frame_get(f"/frame/rejections?{urllib.parse.urlencode(params)}")
 
 
 if __name__ == "__main__":

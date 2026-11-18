@@ -20,7 +20,7 @@ async def escalate_drift(report: DriftReport) -> dict:
     import os as _os
     import time as _time
     state_path = "/var/lib/frame/alert_state.json"  # ReadWritePaths-sanctioned (ProtectHome blocks /root)
-    key = "|".join(sorted(f"{s.organ}/{s.metric}" for s in report.signals))
+    key = f"DRIFT_INCIDENT_{report.overall_verdict}"
     now = _time.time()
     try:
         state = _json.load(open(state_path)) if _os.path.exists(state_path) else {}
