@@ -25,11 +25,22 @@ class TrendPoint(BaseModel):
     verdict: str = "UNKNOWN"
 
 
+class TrendGap(BaseModel):
+    from_ts: str
+    to_ts: str
+    gap_seconds: float
+
+
 class TrendSeries(BaseModel):
     organ: str
     points: list[TrendPoint]
     direction: str  # "IMPROVING" | "STABLE" | "DECAYING" | "OSCILLATING"
     slope: float  # rate of change per hour
+    total_points: int = 0
+    gap_count: int = 0
+    max_gap_seconds: float = 0.0
+    continuity_status: str = "OK"  # "OK" | "CAUTION"
+    gaps: list[TrendGap] = []
 
 
 def _ensure_dir():
@@ -121,6 +132,29 @@ def compute_trend(points: list[TrendPoint]) -> tuple[str, float]:
     return (direction, round(slope_per_hour, 6))
 
 
+def analyze_trend_gaps(points: list[TrendPoint], gap_threshold_s: float = 600.0) -> tuple[list[TrendGap], float, str]:
+    """Identify windows between consecutive trend samples exceeding gap_threshold_s."""
+    if len(points) < 2:
+        return ([], 0.0, "OK")
+    ordered = sorted(points, key=lambda p: p.epoch)
+    gaps: list[TrendGap] = []
+    max_gap = 0.0
+    for prev, cur in zip(ordered, ordered[1:]):
+        delta = cur.epoch - prev.epoch
+        if delta > max_gap:
+            max_gap = delta
+        if delta > gap_threshold_s:
+            gaps.append(
+                TrendGap(
+                    from_ts=prev.timestamp,
+                    to_ts=cur.timestamp,
+                    gap_seconds=round(delta, 1),
+                )
+            )
+    status = "CAUTION" if gaps else "OK"
+    return (gaps, round(max_gap, 1), status)
+
+
 def get_federation_trend(hours: int = 24) -> TrendSeries:
     """Get federation-wide trend over the specified time window."""
     all_points = read_trends(limit=500)
@@ -128,10 +162,16 @@ def get_federation_trend(hours: int = 24) -> TrendSeries:
     recent = [p for p in all_points if p.epoch > cutoff]
 
     direction, slope = compute_trend(recent)
+    gaps, max_gap, continuity = analyze_trend_gaps(recent)
 
     return TrendSeries(
         organ="federation",
         points=recent[-50:],  # Return last 50 points max
         direction=direction,
         slope=slope,
+        total_points=len(recent),
+        gap_count=len(gaps),
+        max_gap_seconds=max_gap,
+        continuity_status=continuity,
+        gaps=gaps[-20:],
     )

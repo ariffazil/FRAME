@@ -116,3 +116,24 @@ def update_floor_baseline(floor: str, metrics: dict):
 def get_federation_baseline() -> dict:
     """Return federation-wide baseline."""
     return get_baseline().get("federation", {})
+
+
+def get_baseline_coverage() -> dict:
+    """Compare configured ORGAN_PORTS against stored organ baselines."""
+    from .config import ORGAN_PORTS
+
+    configured = sorted(ORGAN_PORTS.keys())
+    stored_organs = sorted(get_baseline().get("organs", {}).keys())
+    configured_set = set(configured)
+    stored_set = set(stored_organs)
+    covered = sorted(configured_set & stored_set)
+    missing = sorted(configured_set - stored_set)
+    extra_legacy = sorted(stored_set - configured_set)
+    return {
+        "configured_count": len(configured),
+        "baselined_count": len(stored_organs),
+        "covered_count": len(covered),
+        "covered": covered,
+        "missing": missing,
+        "extra_legacy": extra_legacy,
+    }

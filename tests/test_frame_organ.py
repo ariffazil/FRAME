@@ -156,8 +156,78 @@ def test_frame_mcp_registers_10_read_only_tools():
 
     tools = asyncio.run(mod.mcp.list_tools())
     names = {t.name for t in tools}
-    assert len(names) == 10
-    assert {"frame_witness", "frame_rejections", "frame_probe", "frame_drift"}.issubset(names)
+    assert len(names) == 11
+    assert {"frame_witness", "frame_witness_action", "frame_rejections", "frame_probe", "frame_drift"}.issubset(names)
     for t in tools:
         assert t.annotations is not None
         assert getattr(t.annotations, "read_only_hint", None) is True or getattr(t.annotations, "readOnlyHint", None) is True
+
+
+def test_per_action_witness_allowed_denied_and_unverified(tmp_path, monkeypatch):
+    from frame_organ import witness
+
+    monkeypatch.setattr(witness, "WITNESS_ROOTS", (str(tmp_path),))
+    target = tmp_path / "staging.json"
+    target.write_text('{"seq": 0}\n', encoding="utf-8")
+    snap_before = witness.capture_target_snapshot(str(target))
+    assert snap_before["readable"] is True
+    assert snap_before["sha256"]
+
+    # DENIED: kernel rejects, target SHA-256 unchanged -> WITNESS_MATCH_UNCHANGED
+    res_denied = witness.action_witness(
+        action_id="act-deny-1",
+        target_path=str(target),
+        outcome="DENIED",
+        before_sha256=snap_before["sha256"],
+        before_exists=True,
+        kernel_verdict="HOLD",
+    )
+    assert res_denied["witness_verdict"] == "WITNESS_MATCH_UNCHANGED"
+
+    # ALLOWED: target mutated, kernel SEAL + executor receipt -> WITNESS_MATCH
+    target.write_text('{"seq": 1}\n', encoding="utf-8")
+    snap_after = witness.capture_target_snapshot(str(target))
+    res_allowed = witness.action_witness(
+        action_id="act-allow-1",
+        target_path=str(target),
+        outcome="ALLOWED",
+        before_sha256=snap_before["sha256"],
+        before_exists=True,
+        expected_sha256=snap_after["sha256"],
+        kernel_verdict="SEAL",
+        executor_receipt_id="rcpt-001",
+    )
+    assert res_allowed["witness_verdict"] == "WITNESS_MATCH"
+
+    # UNVERIFIED: outside WITNESS_ROOTS -> UNVERIFIED (never PASS)
+    res_unverified = witness.action_witness(
+        action_id="act-unv-1",
+        target_path="/etc/passwd",
+        outcome="ALLOWED",
+        before_sha256="deadbeef",
+        kernel_verdict="SEAL",
+        executor_receipt_id="rcpt-002",
+    )
+    assert res_unverified["witness_verdict"] == "UNVERIFIED"
+
+
+def test_baseline_coverage_and_trend_gaps(tmp_path, monkeypatch):
+    from frame_organ import trend
+
+    monkeypatch.setattr(baseline, "BASELINE_FILE", str(tmp_path / "baseline.json"))
+    monkeypatch.setattr(baseline, "BASELINE_DIR", str(tmp_path))
+    baseline.baseline.clear()
+    baseline.load_baseline()
+    cov = baseline.get_baseline_coverage()
+    assert cov["configured_count"] == len(config.ORGAN_PORTS)
+    assert cov["missing"] == []
+
+    pts = [
+        trend.TrendPoint(timestamp="2026-11-20T00:00:00Z", epoch=1000.0, fq=1.0),
+        trend.TrendPoint(timestamp="2026-11-20T00:05:00Z", epoch=1300.0, fq=1.0),
+        trend.TrendPoint(timestamp="2026-11-20T01:00:00Z", epoch=4600.0, fq=0.9),
+    ]
+    gaps, max_gap, status = trend.analyze_trend_gaps(pts, gap_threshold_s=600.0)
+    assert len(gaps) == 1
+    assert max_gap == 3300.0
+    assert status == "CAUTION"

@@ -36,7 +36,7 @@ WITNESS_ROOTS = tuple(
     p.strip()
     for p in os.getenv(
         "FRAME_WITNESS_ROOTS",
-        "/opt/frame:/var/lib/frame:/root/chron/data:/root/.local/share/arifos",
+        "/opt/frame:/var/lib/frame:/var/tmp:/root/chron/data:/root/.local/share/arifos",
     ).split(":")
     if p.strip()
 )
@@ -375,3 +375,135 @@ def claims_witness(claims: list[dict[str, Any]]) -> dict[str, Any]:
                            "fluency of unpointed text raises scrutiny, never certifies",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
+
+
+def capture_target_snapshot(target_path: str) -> dict[str, Any]:
+    """Independently read a target file and return its sha256, size, and readability."""
+    import hashlib
+
+    snap: dict[str, Any] = {
+        "target_path": target_path,
+        "in_reach": _in_witness_reach(target_path),
+        "exists": False,
+        "readable": False,
+        "sha256": None,
+        "size": None,
+        "mtime": None,
+        "error": None,
+    }
+    if not snap["in_reach"]:
+        snap["error"] = "OUT_OF_WITNESS_REACH"
+        return snap
+    p = Path(target_path)
+    try:
+        if not p.exists():
+            snap["readable"] = True
+            return snap
+        if not p.is_file():
+            snap["exists"] = True
+            snap["error"] = "NOT_A_REGULAR_FILE"
+            return snap
+        data = p.read_bytes()
+        st = p.stat()
+        snap["exists"] = True
+        snap["readable"] = True
+        snap["sha256"] = hashlib.sha256(data).hexdigest()
+        snap["size"] = len(data)
+        snap["mtime"] = st.st_mtime
+    except PermissionError:
+        snap["exists"] = True
+        snap["error"] = "EACCES"
+    except Exception as exc:  # noqa: BLE001
+        snap["error"] = str(exc)[:160]
+    return snap
+
+
+def action_witness(
+    *,
+    action_id: str,
+    target_path: str,
+    outcome: str,
+    before_sha256: str | None = None,
+    before_exists: bool | None = None,
+    expected_sha256: str | None = None,
+    kernel_verdict: str | None = None,
+    executor_receipt_id: str | None = None,
+) -> dict[str, Any]:
+    """Independently witness a per-action staging mutation or denial.
+
+    If target read fails (unreadable or outside WITNESS_ROOTS), witness_verdict
+    is always UNVERIFIED (never PASS).
+    """
+    after = capture_target_snapshot(target_path)
+    out_norm = str(outcome or "").strip().upper()
+    kv_norm = str(kernel_verdict or "").strip().upper()
+
+    base: dict[str, Any] = {
+        "witness": "action",
+        "action_id": action_id,
+        "outcome_claimed": out_norm,
+        "kernel_verdict": kv_norm or None,
+        "executor_receipt_id": executor_receipt_id,
+        "before": {
+            "sha256": before_sha256,
+            "exists": before_exists,
+        },
+        "after": after,
+        "expected_sha256": expected_sha256,
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
+
+    if not after["in_reach"] or not after["readable"]:
+        base["witness_verdict"] = "UNVERIFIED"
+        base["reason"] = f"target unreadable: {after.get('error') or 'READ_FAILED'}"
+        return base
+
+    if out_norm == "ALLOWED":
+        if kv_norm not in ("SEAL", "ALLOW", "APPROVED", "PERMITTED"):
+            base["witness_verdict"] = "UNVERIFIED"
+            base["reason"] = f"missing admissible kernel_verdict for ALLOWED ({kv_norm or 'NONE'})"
+            return base
+        if not executor_receipt_id:
+            base["witness_verdict"] = "UNVERIFIED"
+            base["reason"] = "missing executor_receipt_id for ALLOWED"
+            return base
+        if not after["exists"]:
+            base["witness_verdict"] = "WITNESS_MISMATCH"
+            base["reason"] = "target missing after ALLOWED mutation"
+            return base
+        if expected_sha256 is not None and after["sha256"] != expected_sha256:
+            base["witness_verdict"] = "WITNESS_MISMATCH"
+            base["reason"] = "after sha256 does not match expected_sha256"
+            return base
+        if before_sha256 is not None and after["sha256"] == before_sha256:
+            base["witness_verdict"] = "WITNESS_MISMATCH"
+            base["reason"] = "target sha256 unchanged after ALLOWED mutation"
+            return base
+        base["witness_verdict"] = "WITNESS_MATCH"
+        base["reason"] = "target mutation observed and matched with kernel verdict + executor receipt"
+        return base
+
+    if out_norm == "DENIED":
+        if kv_norm not in ("HOLD", "VOID", "DENIED", "REFUSED", "BLOCKED", "888_HOLD"):
+            base["witness_verdict"] = "UNVERIFIED"
+            base["reason"] = f"missing rejection kernel_verdict for DENIED ({kv_norm or 'NONE'})"
+            return base
+        if before_sha256 is None and before_exists is None:
+            base["witness_verdict"] = "UNVERIFIED"
+            base["reason"] = "missing before snapshot for DENIED comparison"
+            return base
+        if before_exists is not None and after["exists"] != before_exists:
+            base["witness_verdict"] = "WITNESS_VIOLATION"
+            base["reason"] = "target existence changed despite DENIED"
+            return base
+        if before_sha256 is not None and after["sha256"] != before_sha256:
+            base["witness_verdict"] = "WITNESS_VIOLATION"
+            base["reason"] = "target sha256 mutated despite DENIED"
+            return base
+        base["witness_verdict"] = "WITNESS_MATCH_UNCHANGED"
+        base["reason"] = "kernel rejection recorded and target sha256 confirmed unchanged"
+        return base
+
+    base["witness_verdict"] = "UNVERIFIED"
+    base["reason"] = f"unsupported outcome_claimed: {out_norm or 'EMPTY'}"
+    return base

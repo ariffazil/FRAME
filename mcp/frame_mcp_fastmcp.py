@@ -44,6 +44,20 @@ mcp = FastMCP(
 )
 
 
+def _frame_post(path: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """HTTP POST to FRAME daemon."""
+    url = f"http://{FRAME_HOST}:{FRAME_PORT}{path}"
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        return {"error": str(e), "status_code": e.code}
+    except urllib.error.URLError as e:
+        return {"error": f"FRAME daemon unreachable: {e.reason}"}
+
+
 def _frame_get(path: str) -> dict[str, Any]:
     """HTTP GET to FRAME daemon."""
     url = f"http://{FRAME_HOST}:{FRAME_PORT}{path}"
@@ -211,6 +225,31 @@ def frame_rejections(
     if organ:
         params["organ"] = organ
     return _frame_get(f"/frame/rejections?{urllib.parse.urlencode(params)}")
+
+
+@mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True, "openWorldHint": False})
+def frame_witness_action(
+    action_id: str = Field(..., description="Unique action ID being witnessed"),
+    target_path: str = Field(..., description="Staging target file path inside witness reach"),
+    outcome: Literal["ALLOWED", "DENIED"] = Field(..., description="Claimed outcome: ALLOWED or DENIED"),
+    before_sha256: str | None = Field(default=None, description="Target SHA-256 captured before the attempt"),
+    before_exists: bool | None = Field(default=None, description="Whether target existed before the attempt"),
+    expected_sha256: str | None = Field(default=None, description="Expected SHA-256 after an ALLOWED mutation"),
+    kernel_verdict: str | None = Field(default=None, description="Kernel decision (SEAL, HOLD, VOID, etc.)"),
+    executor_receipt_id: str | None = Field(default=None, description="Executor receipt ID for ALLOWED actions"),
+) -> dict[str, Any]:
+    """Per-action witness: independently read target_path and match against
+    action_id, kernel_verdict, and executor_receipt_id. OBSERVATIONAL_ONLY."""
+    return _frame_post("/frame/witness/action", {
+        "action_id": action_id,
+        "target_path": target_path,
+        "outcome": outcome,
+        "before_sha256": before_sha256,
+        "before_exists": before_exists,
+        "expected_sha256": expected_sha256,
+        "kernel_verdict": kernel_verdict,
+        "executor_receipt_id": executor_receipt_id,
+    })
 
 
 if __name__ == "__main__":

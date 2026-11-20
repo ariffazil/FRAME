@@ -23,6 +23,7 @@ from fastapi.responses import JSONResponse
 
 from .baseline import (
     get_baseline,
+    get_baseline_coverage,
     get_organ_baseline,
     get_federation_baseline,
     update_organ_baseline,
@@ -35,7 +36,7 @@ from .rsi_verify import verify_monotonicity
 from .alert import escalate_drift
 from .report import generate_report
 from .rejection import load_rejections, get_rejection_summary
-from .witness import path_witness, consumption_witness, claims_witness
+from .witness import action_witness, capture_target_snapshot, claims_witness, consumption_witness, path_witness
 from .config import FRAME_PORT, FRAME_HOST, FRAME_LOG_LEVEL
 
 
@@ -88,8 +89,10 @@ async def health():
 
 @app.get("/frame/baseline")
 async def frame_baseline():
-    """Full baseline for all tracked organs and floors."""
-    return get_baseline()
+    """Full baseline for all tracked organs and floors, plus coverage."""
+    data = dict(get_baseline())
+    data["coverage"] = get_baseline_coverage()
+    return data
 
 
 @app.get("/frame/baseline/{organ}")
@@ -164,7 +167,7 @@ def _observe(payload: dict) -> dict:
     payload["verdict_source"] = None
     try:
         from .baseline import load_baseline
-        est = (load_baseline() or {}).get("established_at", "")
+        est = (load_baseline() or {}).get("updated_at") or (load_baseline() or {}).get("established_at", "")
         if est:
             age_days = (_dt.datetime.now(_dt.timezone.utc)
                         - _dt.datetime.strptime(est, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=_dt.timezone.utc)).days
@@ -335,6 +338,32 @@ async def frame_witness_claims(request: Request):
     if not isinstance(claims, list):
         return JSONResponse(status_code=422, content={"error": "claims must be a list"})
     return _observe(claims_witness(claims))
+
+
+@app.get("/frame/witness/target")
+async def frame_witness_target(path: str = Query(..., min_length=1)):
+    """Independently read a staging target's sha256, size, and readability."""
+    return _observe(capture_target_snapshot(path))
+
+
+@app.post("/frame/witness/action")
+async def frame_witness_action(request: Request):
+    """Per-action witness: match independent target observation with action_id,
+    kernel_verdict, and executor_receipt_id."""
+    body = await request.json()
+    if not isinstance(body, dict) or not body.get("action_id") or not body.get("target_path"):
+        return JSONResponse(status_code=422, content={"error": "action_id and target_path are required"})
+    res = action_witness(
+        action_id=str(body["action_id"]),
+        target_path=str(body["target_path"]),
+        outcome=str(body.get("outcome") or ""),
+        before_sha256=body.get("before_sha256"),
+        before_exists=body.get("before_exists"),
+        expected_sha256=body.get("expected_sha256"),
+        kernel_verdict=body.get("kernel_verdict"),
+        executor_receipt_id=body.get("executor_receipt_id"),
+    )
+    return _observe(res)
 
 
 # ── Entrypoint ──────────────────────────────────────────────────────
