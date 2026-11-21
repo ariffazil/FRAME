@@ -1,7 +1,7 @@
 <!-- SOT-MANIFEST
-federation_release: v2026.11.18
-last_verified: 2026-11-18T07:29:53Z
-live_commit: feat/frame-agentic-align-20261118 (synced live at /opt/frame via canon-mutate)
+federation_release: v2026.11.21
+last_verified: 2026-11-21T13:16:00Z
+live_commit: a055510 (synced live at /opt/frame via canon-mutate)
 live_health: ok :18085 observer (9/9 chambers active; 14 organs & gateways probed: 9 healthy, 5 degraded, 0 down)
 mcp_port: 18086
 mcp_tools_live: 10 (frame_health, frame_probe, frame_drift, frame_baseline, frame_trend, frame_report, frame_rsi_verify, frame_behavioral_drift, frame_witness, frame_rejections)
