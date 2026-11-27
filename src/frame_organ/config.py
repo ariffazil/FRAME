@@ -28,6 +28,12 @@ ORGAN_PORTS = {
     # Shared model & agentic-tools gateway planes
     "litellm": 4000,
     "agentic_tools": 18430,
+    # MCP servers that were serving while absent from this map (2026-11-27 FI-008).
+    # Measured: each PID owned exactly one listening port.
+    "arifflow_mcp": 7075,
+    # xerj :9300 deliberately NOT probed: engine stopped 2026-11-26 under memory
+    # pressure and was removed from the tool surface. Probing a service we chose
+    # to stop would be permanent noise, not information.
     # flame (:18901) RETIRED 2026-09-04 — legacy lane decommissioned, no systemd
     # unit exists and nothing listens. Removed 2026-10-20.
 }
